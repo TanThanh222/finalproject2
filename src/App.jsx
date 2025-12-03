@@ -9,10 +9,10 @@ import CourseSingleAltScreen from "./screens/Courses/SingleAlt.jsx";
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomeScreen />} />
-      <Route path="/login" element={<LoginRegisterScreen />} />
+      <Route path="/home" element={<HomeScreen />} />
+      <Route path="/loginres" element={<LoginRegisterScreen />} />
       <Route path="/courses" element={<CourseListingScreen />} />
-      <Route path="/courses/:id" element={<CourseSingleScreen />} />
+      <Route path="/course-single/:id" element={<CourseSingleScreen />} />
       <Route path="/course-single-alt/:id" element={<CourseSingleAltScreen />} />
     </Routes>
   );
