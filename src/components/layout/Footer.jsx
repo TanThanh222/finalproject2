@@ -56,7 +56,6 @@ const BrandRow = styled.div`
 const BrandText = styled.p`
   font-size: 18px;
   font-weight: 400;
-  line-height: 1.6;
   color: #6b7280;
 `;
 
@@ -94,7 +93,6 @@ const ContactText = styled.p`
   font-size: 18px;
   font-weight: 400;
   color: #6b7280;
-  line-height: 2;
 `;
 
 const SocialRow = styled.div`

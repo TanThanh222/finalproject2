@@ -3,8 +3,10 @@ import styled from "styled-components";
 import PageContainer from "./PageContainer";
 import Logo from "../../assets/logos/edupress.svg";
 import { SearchIcon } from "../../assets/icons/ui";
+import PrimaryButton from "../common/PrimaryButton.jsx";
 
 const Header = styled.header`
+  background-color: #fff;
   border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
@@ -81,53 +83,6 @@ const RightActions = styled.div`
   gap: 16px;
 `;
 
-const LoginButton = styled.button`
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: 1px solid #ff782d;
-  background-color: #ffffff;
-  color: #111827;
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease,
-    box-shadow 0.15s ease;
-
-  &:hover {
-    background-color: #ff782d;
-    color: #ffffff;
-    box-shadow: 0 8px 16px rgba(249, 115, 22, 0.35);
-  }
-`;
-
-const SearchButton = styled.button`
-  height: 40px;
-  width: 40px;
-  border-radius: 999px;
-  border: 1px solid #ff782d;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #ffffff;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease,
-    box-shadow 0.15s ease;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover {
-    background-color: #fff7f3;
-    border-color: #ff782d;
-    box-shadow: 0 6px 14px rgba(249, 115, 22, 0.25);
-  }
-`;
-
 export default function Navbar() {
   const location = useLocation();
 
@@ -166,17 +121,16 @@ export default function Navbar() {
           </NavCenter>
 
           <RightActions>
-            <LoginButton
-              type="button"
-              onClick={() => {
-                window.location.href = "/loginres";
-              }}
+            <PrimaryButton
+              variant="outline"
+              size="md"
+              onClick={() => (window.location.href = "/loginres")}
             >
               Login / Register
-            </LoginButton>
-            <SearchButton type="button" aria-label="Search">
+            </PrimaryButton>
+            <PrimaryButton variant="icon" aria-label="Search">
               <SearchIcon />
-            </SearchButton>
+            </PrimaryButton>
           </RightActions>
         </NavBar>
       </PageContainer>
