@@ -137,7 +137,7 @@ export default function Navbar() {
         <NavBar>
           <Brand>
             <img src={Logo} alt="EduPress" />
-            <h1>EduPress</h1>
+            <span>EduPress</span>
           </Brand>
 
           <NavCenter>
