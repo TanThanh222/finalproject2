@@ -182,7 +182,7 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-      {/* FEATURED COURSES */}
+
       <section className="bg-white py-20">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
@@ -200,7 +200,6 @@ export default function HomeScreen() {
             </PrimaryButton>
           </div>
 
-          {/* GRID */}
           <div className="grid gap-5 lg:grid-cols-3">
             {courses.slice(0, 6).map((course) => (
               <CourseCard key={course.id} course={course} />
