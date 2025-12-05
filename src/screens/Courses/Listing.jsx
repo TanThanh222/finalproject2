@@ -1,5 +1,3 @@
-// src/screens/Courses/Listing.jsx
-
 export default function CourseListingScreen() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
