@@ -1,3 +1,10 @@
+import course1 from "../assets/courses/course1.png";
+import course2 from "../assets/courses/course2.png";
+import course3 from "../assets/courses/course3.png";
+import course4 from "../assets/courses/course4.png";
+import course5 from "../assets/courses/course5.png";
+import course6 from "../assets/courses/course6.png";
+
 const courses = [
   {
     id: "c1",
@@ -10,7 +17,7 @@ const courses = [
     lessons: 20,
     price: 0,
     oldPrice: 29,
-    thumbnail: "/assets/images/course1.png",
+    thumbnail: course1,
   },
   {
     id: "c2",
@@ -23,7 +30,7 @@ const courses = [
     lessons: 20,
     price: 49,
     oldPrice: 59,
-    thumbnail: "/assets/images/course2.png",
+    thumbnail: course2,
   },
   {
     id: "c3",
@@ -36,7 +43,7 @@ const courses = [
     lessons: 20,
     price: 0,
     oldPrice: 29,
-    thumbnail: "/assets/images/course3.png",
+    thumbnail: course3,
   },
   {
     id: "c4",
@@ -49,7 +56,7 @@ const courses = [
     lessons: 20,
     price: 0,
     oldPrice: 29,
-    thumbnail: "/assets/images/course4.png",
+    thumbnail: course4,
   },
   {
     id: "c5",
@@ -62,7 +69,7 @@ const courses = [
     lessons: 20,
     price: 0,
     oldPrice: 29,
-    thumbnail: "/assets/images/course5.png",
+    thumbnail: course5,
   },
   {
     id: "c6",
@@ -75,7 +82,7 @@ const courses = [
     lessons: 20,
     price: 0,
     oldPrice: 29,
-    thumbnail: "/assets/images/course6.png",
+    thumbnail: course6,
   },
 ];
 
