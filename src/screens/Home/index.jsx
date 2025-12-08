@@ -27,6 +27,8 @@ const categories = [
   { id: 9, title: "Science", courses: 38, Icon: ScienceIcon },
   { id: 10, title: "Network", courses: 38, Icon: NetworkIcon },
 ];
+import AddonsBanner from "../../assets/home/addons.png";
+import SkillIllustration from "../../assets/home/skill.png";
 
 function CategoryCard({ title, courses, Icon }) {
   return (
@@ -139,6 +141,77 @@ export default function HomeScreen() {
             </PrimaryButton>
           </div>
           <CourseList courses={courses} limit={6} />
+        </PageContainer>
+      </section>
+
+      <section className="bg-white pb-20">
+        <PageContainer className="space-y-10">
+          <div className="overflow-hidden rounded-4xl shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+            <img
+              src={AddonsBanner}
+              alt="LearnPress Add-Ons"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+              <p className="text-2xl font-semibold text-[#FF782D]">25K+</p>
+              <p className="mt-1 text-xs text-slate-500">Active Students</p>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+              <p className="text-2xl font-semibold text-[#FF782D]">899</p>
+              <p className="mt-1 text-xs text-slate-500">Total Courses</p>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+              <p className="text-2xl font-semibold text-[#FF782D]">158</p>
+              <p className="mt-1 text-xs text-slate-500">Instructor</p>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+              <p className="text-2xl font-semibold text-[#FF782D]">100%</p>
+              <p className="mt-1 text-xs text-slate-500">Satisfaction Rate</p>
+            </div>
+          </div>
+
+          <div className="grid gap-10 items-center lg:grid-cols-2">
+            <div className="flex justify-center">
+              <img
+                src={SkillIllustration}
+                alt="Grow your skill"
+                className="w-full max-w-md lg:max-w-none"
+              />
+            </div>
+
+            <div>
+              <h2 className="mb-3 text-[24px] font-semibold text-slate-900">
+                Grow Us Your Skill
+                <br />
+                With LearnPress LMS
+              </h2>
+              <p className="mb-4 text-sm text-slate-600">
+                We denounce with righteous indignation and dislike men who are
+                so beguiled and demoralized that cannot trouble.
+              </p>
+
+              <ul className="mb-6 space-y-2 text-sm text-slate-600">
+                {[
+                  "Certification",
+                  "Certification",
+                  "Certification",
+                  "Certification",
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#FF782D] text-[10px] text-white">
+                      ✓
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <PrimaryButton size="md">Explorer Course</PrimaryButton>
+            </div>
+          </div>
         </PageContainer>
       </section>
     </>
