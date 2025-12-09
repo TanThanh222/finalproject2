@@ -1,11 +1,217 @@
+import { useState } from "react";
+import PageContainer from "../../components/layout/PageContainer.jsx";
+import courses from "../../data/courses.jsx";
+import CourseCard from "../../components/courses/CourseCard.jsx";
+import { SearchIcon, GridIcon, ListIcon } from "../../assets/icons/ui.jsx";
+
 export default function CourseListingScreen() {
+  const [viewMode, setViewMode] = useState("list");
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-2">Courses Listing</h1>
-      <p className="text-gray-600">
-        Trang này tạm thời chưa code nội dung. Sau này bạn sẽ dựng Course
-        Listing giống Figma ở đây.
-      </p>
-    </div>
+    <section className="bg-[#F4F5F7] py-14">
+      <PageContainer>
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-[24px] font-semibold text-slate-900">
+            All Courses
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="h-9 w-64 rounded-full border border-[#e5e7eb] bg-white pl-4 pr-9 text-xs text-slate-700 placeholder:text-slate-400 focus:border-[#FF782D] focus:outline-none"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <SearchIcon className="h-4 w-4" />
+              </span>
+            </div>
+
+            <div className="flex items-center rounded-full border border-[#e5e7eb] bg-white px-1 py-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition ${
+                  viewMode === "grid"
+                    ? "bg-[#FF782D]/10 text-[#FF782D]"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                <GridIcon className="h-4 w-4" />
+              </button>
+
+              <span className="mx-1 h-4 w-px bg-slate-200" />
+
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition ${
+                  viewMode === "list"
+                    ? "bg-[#FF782D]/10 text-[#FF782D]"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                <ListIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="flex-1 space-y-4">
+            {viewMode === "grid" ? (
+              <div className="grid gap-5 lg:grid-cols-2">
+                {courses.map((course) => (
+                  <CourseCard key={course.id} course={course} variant="grid" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {courses.map((course) => (
+                  <CourseCard key={course.id} course={course} variant="list" />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-center gap-2">
+              {[1, 2, 3].map((page) => (
+                <button
+                  key={page}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition ${
+                    page === 1
+                      ? "border-[#FF782D] bg-[#FF782D] text-white"
+                      : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <aside className="w-full shrink-0 space-y-6 rounded-3xl bg-white p-5 lg:w-80 lg:p-6">
+            <div>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Course Category
+              </h3>
+              <ul className="space-y-1 text-xs text-slate-600">
+                {[
+                  "Commercial",
+                  "Office",
+                  "Shop",
+                  "Educate",
+                  "Academy",
+                  "Single family home",
+                  "Studio",
+                  "University",
+                ].map((item) => (
+                  <li key={item} className="flex items-center justify-between">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                      />
+                      <span>{item}</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400">15</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Instructors
+              </h3>
+              <ul className="space-y-1 text-xs text-slate-600">
+                {["Kenny White", "John Doe"].map((item) => (
+                  <li key={item} className="flex items-center justify-between">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                      />
+                      <span>{item}</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400">15</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Price
+              </h3>
+              <ul className="space-y-1 text-xs text-slate-600">
+                {["All", "Free", "Paid"].map((item) => (
+                  <li key={item} className="flex items-center justify-between">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="price"
+                        className="h-3 w-3 border-slate-300 text-[#FF782D]"
+                      />
+                      <span>{item}</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400">15</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Review
+              </h3>
+              <ul className="space-y-1 text-xs text-slate-600">
+                {[5, 4, 3, 2, 1].map((star) => (
+                  <li key={star} className="flex items-center justify-between">
+                    <label className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={
+                            idx < star ? "text-[#F7B500]" : "text-slate-300"
+                          }
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </label>
+                    <span className="text-[11px] text-slate-400">(1,025)</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Level
+              </h3>
+              <ul className="space-y-1 text-xs text-slate-600">
+                {["All levels", "Beginner", "Intermediate", "Expert"].map(
+                  (item) => (
+                    <li
+                      key={item}
+                      className="flex items-center justify-between"
+                    >
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                        />
+                        <span>{item}</span>
+                      </label>
+                      <span className="text-[11px] text-slate-400">15</span>
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </PageContainer>
+    </section>
   );
 }

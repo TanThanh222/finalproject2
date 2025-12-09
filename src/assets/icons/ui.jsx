@@ -22,7 +22,7 @@ export function SearchIcon({ className = "" }) {
     </svg>
   );
 }
-export function Grid1Icon({ className = "" }) {
+export function GridIcon({ className = "" }) {
   return (
     <svg
       width="20"
@@ -40,7 +40,7 @@ export function Grid1Icon({ className = "" }) {
     </svg>
   );
 }
-export function Grid2Icon({ className = "" }) {
+export function ListIcon({ className = "" }) {
   return (
     <svg
       width="20"
