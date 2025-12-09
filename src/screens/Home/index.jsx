@@ -29,6 +29,8 @@ const categories = [
 ];
 import AddonsBanner from "../../assets/home/addons.png";
 import SkillIllustration from "../../assets/home/skill.png";
+import LmsBanner from "../../assets/home/academylms.png";
+import StudentIcon from "../../assets/home/student.png";
 
 function CategoryCard({ title, courses, Icon }) {
   return (
@@ -211,6 +213,105 @@ export default function HomeScreen() {
 
               <PrimaryButton size="md">Explorer Course</PrimaryButton>
             </div>
+          </div>
+        </PageContainer>
+      </section>
+
+      <section className="bg-white py-20">
+        <PageContainer>
+          <div className="text-center mb-10">
+            <h2 className="text-[24px] font-semibold text-slate-900">
+              Student Feedbacks
+            </h2>
+            <p className="text-sm text-slate-500">
+              What Students Say About Academy LMS
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-4">
+            {[1, 2, 3, 4].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-3xl border border-[#e5e7eb] bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+              >
+                <span className="text-5xl leading-none text-slate-300">“</span>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                  I must explain to you how all this mistaken idea of denouncing
+                  pleasure and praising pain was born and I will give you a
+                  complete account of the system and expound.
+                </p>
+
+                <div className="mt-4">
+                  <p className="font-semibold text-[13px] text-slate-900">
+                    Roe Smith
+                  </p>
+                  <p className="text-[11px] text-slate-500">Designer</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </PageContainer>
+      </section>
+
+      <section className="py-20">
+        <PageContainer>
+          <div
+            className="
+        relative w-full overflow-hidden 
+        rounded-4xl
+        bg-linear-to-r from-[#C9E8FF] via-[#F9D8FF] to-[#FFE5D1]
+        px-10 py-12
+      "
+          >
+            <div className="flex items-center gap-4 md:gap-6">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
+                <img
+                  src={StudentIcon}
+                  alt="Student"
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-[20px] font-semibold text-slate-900">
+                  Let’s Start With Academy LMS
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Get started now — it's free
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3 md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2">
+              <button
+                className="
+            rounded-full border border-[#FF782D] 
+            px-6 py-2 text-sm font-medium text-[#FF782D] 
+            transition hover:bg-[#FF782D] hover:text-white
+          "
+              >
+                I'm A Student
+              </button>
+
+              <button
+                className="
+            rounded-full bg-[#FF782D]
+            px-6 py-2 text-sm font-medium text-white 
+            transition hover:bg-[#e5691d]
+          "
+              >
+                Become An Instructor
+              </button>
+            </div>
+
+            <img
+              src={LmsBanner}
+              alt="Academy banner"
+              className="
+          pointer-events-none absolute bottom-0 right-0 hidden 
+          w-[45%] md:block
+        "
+            />
           </div>
         </PageContainer>
       </section>
