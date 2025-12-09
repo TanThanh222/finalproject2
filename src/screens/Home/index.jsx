@@ -258,60 +258,51 @@ export default function HomeScreen() {
           <div
             className="
         relative w-full overflow-hidden 
-        rounded-4xl
-        bg-linear-to-r from-[#C9E8FF] via-[#F9D8FF] to-[#FFE5D1]
-        px-10 py-12
+        rounded-[30px] px-10 py-12
       "
+            style={{
+              backgroundImage: `url(${LmsBanner})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
           >
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
+            <div className="flex items-center gap-6">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl">
                 <img
                   src={StudentIcon}
                   alt="Student"
-                  className="h-10 w-10 object-contain"
+                  className="h-20 w-20 object-contain"
                 />
               </div>
 
               <div>
-                <h3 className="text-[20px] font-semibold text-slate-900">
+                <h3 className="text-[26px] font-semibold text-slate-900">
                   Let’s Start With Academy LMS
                 </h3>
-                <p className="text-sm text-slate-600">
+                <p className="text-[15px] text-slate-600">
                   Get started now — it's free
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3 md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2">
-              <button
-                className="
-            rounded-full border border-[#FF782D] 
-            px-6 py-2 text-sm font-medium text-[#FF782D] 
-            transition hover:bg-[#FF782D] hover:text-white
-          "
+            <div
+              className="
+          mt-6 flex flex-wrap gap-4 
+          md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2
+        "
+            >
+              <PrimaryButton
+                variant="outline"
+                size="md"
+                className="rounded-full px-7 py-2.5"
               >
                 I'm A Student
-              </button>
+              </PrimaryButton>
 
-              <button
-                className="
-            rounded-full bg-[#FF782D]
-            px-6 py-2 text-sm font-medium text-white 
-            transition hover:bg-[#e5691d]
-          "
-              >
+              <PrimaryButton size="md" className="rounded-full px-7 py-2.5">
                 Become An Instructor
-              </button>
+              </PrimaryButton>
             </div>
-
-            <img
-              src={LmsBanner}
-              alt="Academy banner"
-              className="
-          pointer-events-none absolute bottom-0 right-0 hidden 
-          w-[45%] md:block
-        "
-            />
           </div>
         </PageContainer>
       </section>
