@@ -31,6 +31,9 @@ import AddonsBanner from "../../assets/home/addons.png";
 import SkillIllustration from "../../assets/home/skill.png";
 import LmsBanner from "../../assets/home/academylms.png";
 import StudentIcon from "../../assets/home/student.png";
+import article1 from "../../assets/home/article1.png";
+import article2 from "../../assets/home/article2.png";
+import article3 from "../../assets/home/article3.png";
 
 function CategoryCard({ title, courses, Icon }) {
   return (
@@ -69,6 +72,68 @@ function CategoryCard({ title, courses, Icon }) {
   );
 }
 
+const articles = [
+  {
+    id: "a1",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article1,
+  },
+  {
+    id: "a2",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article2,
+  },
+  {
+    id: "a3",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article3,
+  },
+];
+
+function ArticleCard({ article }) {
+  const { title, date, category, excerpt, thumbnail } = article;
+
+  return (
+    <article className="flex flex-col overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.04)]">
+      <div className="relative">
+        <img src={thumbnail} alt={title} className="h-52 w-full object-cover" />
+
+        <span className="absolute left-4 top-4 rounded-full bg-slate-900/85 px-3 py-1 text-xs font-medium text-white">
+          {category}
+        </span>
+      </div>
+
+      <div className="px-5 py-4">
+        <p className="mb-1 text-[11px] text-slate-500">{date}</p>
+
+        <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-900">
+          {title}
+        </h3>
+
+        <p className="text-xs text-slate-500">{excerpt}</p>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between border-t border-[#e5e7eb] px-5 py-3 text-xs">
+        <button className="font-semibold text-slate-900 transition-colors hover:text-[#FF782D]">
+          View More
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export default function HomeScreen() {
   return (
     <>
@@ -96,7 +161,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-20">
+      <section className="bg-white py-15">
         <PageContainer>
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -126,7 +191,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-20">
+      <section className="bg-white py-15">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -146,7 +211,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white pb-20">
+      <section className="bg-white pb-15">
         <PageContainer className="space-y-10">
           <div className="overflow-hidden rounded-4xl shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
             <img
@@ -217,7 +282,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-20">
+      <section className="bg-white py-15">
         <PageContainer>
           <div className="text-center mb-10">
             <h2 className="text-[24px] font-semibold text-slate-900">
@@ -253,7 +318,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="py-20">
+      <section className="py-15">
         <PageContainer>
           <div
             className="
@@ -303,6 +368,31 @@ export default function HomeScreen() {
                 Become An Instructor
               </PrimaryButton>
             </div>
+          </div>
+        </PageContainer>
+      </section>
+
+      <section className="bg-white py-15">
+        <PageContainer>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-[24px] font-semibold leading-tight text-slate-900">
+                Latest Articles
+              </h2>
+              <p className="text-sm text-slate-500">
+                Explore our Free Articles
+              </p>
+            </div>
+
+            <PrimaryButton variant="outline" size="sm">
+              All Articles
+            </PrimaryButton>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {articles.map((article) => (
+              <ArticleCard key={article.id} article={article} />
+            ))}
           </div>
         </PageContainer>
       </section>
