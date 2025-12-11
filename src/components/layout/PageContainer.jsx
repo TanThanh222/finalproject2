@@ -1,10 +1,10 @@
 import styled from "styled-components";
 
 const Wrapper = styled.div`
-  max-width: 1200px; /* giống Figma */
-  margin: 0 auto; /* căn giữa toàn trang */
-  padding-left: 1rem; /* 16px */
-  padding-right: 1rem; /* 16px */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 
   @media (min-width: 1024px) {
     padding-left: 0;

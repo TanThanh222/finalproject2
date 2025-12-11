@@ -15,6 +15,15 @@ import {
 } from "../../assets/icons/category.jsx";
 import courses from "../../data/courses.jsx";
 import CourseList from "../../components/courses/CourseList.jsx";
+
+import AddonsBanner from "../../assets/home/addons.png";
+import SkillIllustration from "../../assets/home/skill.png";
+import LmsBanner from "../../assets/home/academylms.png";
+import StudentIcon from "../../assets/home/student.png";
+import article1 from "../../assets/home/article1.png";
+import article2 from "../../assets/home/article2.png";
+import article3 from "../../assets/home/article3.png";
+
 const categories = [
   { id: 1, title: "Art & Design", courses: 38, Icon: ArtIcon },
   { id: 2, title: "Development", courses: 38, Icon: DevelopmentIcon },
@@ -27,13 +36,36 @@ const categories = [
   { id: 9, title: "Science", courses: 38, Icon: ScienceIcon },
   { id: 10, title: "Network", courses: 38, Icon: NetworkIcon },
 ];
-import AddonsBanner from "../../assets/home/addons.png";
-import SkillIllustration from "../../assets/home/skill.png";
-import LmsBanner from "../../assets/home/academylms.png";
-import StudentIcon from "../../assets/home/student.png";
-import article1 from "../../assets/home/article1.png";
-import article2 from "../../assets/home/article2.png";
-import article3 from "../../assets/home/article3.png";
+
+const articles = [
+  {
+    id: "a1",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article1,
+  },
+  {
+    id: "a2",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article2,
+  },
+  {
+    id: "a3",
+    title: "Best LearnPress WordPress Theme Collection For 2023",
+    date: "Jan 24, 2023",
+    category: "Photography",
+    excerpt:
+      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
+    thumbnail: article3,
+  },
+];
 
 function CategoryCard({ title, courses, Icon }) {
   return (
@@ -71,36 +103,6 @@ function CategoryCard({ title, courses, Icon }) {
     </div>
   );
 }
-
-const articles = [
-  {
-    id: "a1",
-    title: "Best LearnPress WordPress Theme Collection For 2023",
-    date: "Jan 24, 2023",
-    category: "Photography",
-    excerpt:
-      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
-    thumbnail: article1,
-  },
-  {
-    id: "a2",
-    title: "Best LearnPress WordPress Theme Collection For 2023",
-    date: "Jan 24, 2023",
-    category: "Photography",
-    excerpt:
-      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
-    thumbnail: article2,
-  },
-  {
-    id: "a3",
-    title: "Best LearnPress WordPress Theme Collection For 2023",
-    date: "Jan 24, 2023",
-    category: "Photography",
-    excerpt:
-      "Looking for an amazing & well-functional LearnPress WordPress Theme?",
-    thumbnail: article3,
-  },
-];
 
 function ArticleCard({ article }) {
   const { title, date, category, excerpt, thumbnail } = article;
@@ -161,9 +163,9 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-15">
+      <section className="bg-white py-16">
         <PageContainer>
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-[32px] font-semibold text-slate-900">
                 Top Categories
@@ -190,8 +192,7 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
-      <section className="bg-white py-15">
+      <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -207,11 +208,12 @@ export default function HomeScreen() {
               All Courses
             </PrimaryButton>
           </div>
+
           <CourseList courses={courses} limit={6} />
         </PageContainer>
       </section>
 
-      <section className="bg-white pb-15">
+      <section className="bg-white pb-16">
         <PageContainer className="space-y-10">
           <div className="overflow-hidden rounded-4xl shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
             <img
@@ -222,22 +224,22 @@ export default function HomeScreen() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-4">
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-              <p className="text-2xl font-semibold text-[#FF782D]">25K+</p>
-              <p className="mt-1 text-xs text-slate-500">Active Students</p>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-              <p className="text-2xl font-semibold text-[#FF782D]">899</p>
-              <p className="mt-1 text-xs text-slate-500">Total Courses</p>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-              <p className="text-2xl font-semibold text-[#FF782D]">158</p>
-              <p className="mt-1 text-xs text-slate-500">Instructor</p>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-              <p className="text-2xl font-semibold text-[#FF782D]">100%</p>
-              <p className="mt-1 text-xs text-slate-500">Satisfaction Rate</p>
-            </div>
+            {[
+              { label: "Active Students", value: "25K+" },
+              { label: "Total Courses", value: "899" },
+              { label: "Instructor", value: "158" },
+              { label: "Satisfaction Rate", value: "100%" },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
+              >
+                <p className="text-2xl font-semibold text-[#FF782D]">
+                  {item.value}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{item.label}</p>
+              </div>
+            ))}
           </div>
 
           <div className="grid gap-10 items-center lg:grid-cols-2">
@@ -282,9 +284,9 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-15">
+      <section className="bg-white py-16">
         <PageContainer>
-          <div className="text-center mb-10">
+          <div className="mb-10 text-center">
             <h2 className="text-[24px] font-semibold text-slate-900">
               Student Feedbacks
             </h2>
@@ -317,21 +319,20 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
-      <section className="py-15">
+      <section className="py-16">
         <PageContainer>
           <div
             className="
-        relative w-full overflow-hidden 
-        rounded-[30px] px-10 py-12
-      "
+              relative w-full overflow-hidden 
+              rounded-[30px] px-10 py-12
+            "
             style={{
               backgroundImage: `url(${LmsBanner})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           >
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center gap-6">
               <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl">
                 <img
                   src={StudentIcon}
@@ -352,9 +353,9 @@ export default function HomeScreen() {
 
             <div
               className="
-          mt-6 flex flex-wrap gap-4 
-          md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2
-        "
+                mt-6 flex flex-wrap gap-4 
+                md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2
+              "
             >
               <PrimaryButton
                 variant="outline"
@@ -372,7 +373,7 @@ export default function HomeScreen() {
         </PageContainer>
       </section>
 
-      <section className="bg-white py-15">
+      <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
             <div>

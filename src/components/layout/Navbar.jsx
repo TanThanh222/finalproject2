@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import PageContainer from "./PageContainer";
 import Logo from "../../assets/logos/edupress.svg";
@@ -84,7 +84,7 @@ const RightActions = styled.div`
 `;
 
 export default function Navbar() {
-  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Header>
@@ -124,10 +124,11 @@ export default function Navbar() {
             <PrimaryButton
               variant="outline"
               size="md"
-              onClick={() => (window.location.href = "/loginres")}
+              onClick={() => navigate("/login")}
             >
               Login / Register
             </PrimaryButton>
+
             <PrimaryButton variant="icon" aria-label="Search">
               <SearchIcon />
             </PrimaryButton>

@@ -1,64 +1,65 @@
+import { useNavigate } from "react-router-dom";
+
 export default function CourseCard({ course, variant = "grid" }) {
-  const {
-    title,
-    category,
-    instructor,
-    weeks,
-    students,
-    price,
-    oldPrice,
-    thumbnail,
-  } = course;
+  const navigate = useNavigate();
+  const isGrid = variant === "grid";
 
-  const isFree = price === 0;
-  const priceLabel = isFree ? "Free" : `$${price}.00`;
-  const oldPriceLabel = oldPrice ? `$${oldPrice}.00` : null;
+  const handleViewDetail = () => {
+    navigate(`/courses/${course.id}`);
+  };
 
-  if (variant === "grid") {
+  if (isGrid) {
     return (
-      <article className="flex flex-col overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-        <div className="relative">
+      <article
+        className="
+          overflow-hidden rounded-3xl bg-white 
+          border border-[#e5e7eb]
+          shadow-[0_18px_45px_rgba(15,23,42,0.04)]
+          transition-all duration-300
+          hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(15,23,42,0.08)]
+        "
+      >
+        <div className="relative w-full h-[180px] overflow-hidden rounded-t-3xl">
           <img
-            src={thumbnail}
-            alt={title}
-            className="h-52 w-full object-cover"
+            src={course.thumbnail}
+            alt={course.title}
+            className="w-full h-full object-cover"
           />
-          <span className="absolute left-4 top-4 rounded-full bg-slate-900/85 px-3 py-1 text-xs font-medium text-white">
-            {category}
+          <span className="absolute left-3 top-3 rounded-full bg-slate-900/85 px-3 py-1 text-[11px] text-white">
+            {course.category}
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col px-5 py-4">
-          <p className="mb-1 text-[11px] text-slate-500">by {instructor}</p>
+        <div className="px-5 py-4 space-y-2">
+          <p className="text-[11px] text-slate-500">by {course.instructor}</p>
 
-          <h3 className="mb-3 text-sm font-semibold leading-snug text-slate-900">
-            {title}
+          <h3 className="text-sm font-semibold text-slate-900 leading-tight line-clamp-2">
+            {course.title}
           </h3>
 
-          <div className="mb-3 flex items-center gap-4 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#FF782D]" />
-              {weeks} Weeks
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              {students} Students
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span>⏱ {course.weeks} Weeks</span>
+            <span>👥 {course.students} Students</span>
+          </div>
+
+          <div className="flex items-center gap-2 mt-2">
+            {course.oldPrice > 0 && (
+              <span className="text-xs text-gray-400 line-through">
+                ${course.oldPrice}
+              </span>
+            )}
+
+            <span className="text-sm font-bold text-[#FF782D]">
+              {course.price === 0 ? "Free" : `$${course.price}`}
             </span>
           </div>
 
-          <div className="mt-auto flex items-center justify-between border-t border-[#e5e7eb] pt-3 text-xs">
-            <div className="flex items-baseline gap-2">
-              {oldPriceLabel && (
-                <span className="text-[11px] text-slate-400 line-through">
-                  {oldPriceLabel}
-                </span>
-              )}
-              <span className="text-sm font-semibold text-[#FF782D]">
-                {priceLabel}
-              </span>
-            </div>
-
-            <button className="text-[11px] font-semibold text-slate-900 transition-colors hover:text-[#FF782D]">
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={handleViewDetail}
+              className="text-xs font-semibold text-[#FF782D] hover:underline"
+            >
               View More
             </button>
           </div>
@@ -68,50 +69,57 @@ export default function CourseCard({ course, variant = "grid" }) {
   }
 
   return (
-    <article className="flex overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_10px_25px_rgba(15,23,42,0.05)]">
-      <div className="relative w-[260px] shrink-0">
+    <article
+      className="
+        flex gap-4 rounded-3xl bg-white 
+        border border-[#e5e7eb]
+        shadow-[0_10px_30px_rgba(15,23,42,0.04)]
+        p-4
+      "
+    >
+      <div className="relative w-[180px] h-[110px] overflow-hidden rounded-2xl shrink-0">
         <img
-          src={thumbnail}
-          alt={title}
-          className="h-full w-full object-cover"
+          src={course.thumbnail}
+          alt={course.title}
+          className="w-full h-full object-cover"
         />
-        <span className="absolute left-4 top-4 rounded-full bg-slate-900/85 px-3 py-1 text-xs font-medium text-white">
-          {category}
+        <span className="absolute left-2 top-2 rounded-full bg-slate-900/85 px-2.5 py-1 text-[10px] text-white">
+          {course.category}
         </span>
       </div>
+      <div className="flex flex-1 flex-col justify-between">
+        <div className="space-y-1">
+          <p className="text-[11px] text-slate-500">by {course.instructor}</p>
 
-      <div className="flex flex-1 flex-col px-5 py-4">
-        <p className="mb-1 text-[11px] text-slate-500">by {instructor}</p>
+          <h3 className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
+            {course.title}
+          </h3>
 
-        <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-900">
-          {title}
-        </h3>
-
-        <div className="mb-3 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
-          <span>🕒 {weeks} Weeks</span>
-          <span>👥 {students} Students</span>
-          <span>• All levels</span>
-          <span>• 20 Lessons</span>
+          <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+            <span>⏱ {course.weeks} Weeks</span>
+            <span>👥 {course.students} Students</span>
+            <span>{course.level}</span>
+          </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-[#e5e7eb] pt-3 text-xs">
-          <div className="flex items-baseline gap-2">
-            {oldPriceLabel && (
-              <span className="text-[11px] text-slate-400 line-through">
-                {oldPriceLabel}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {course.oldPrice > 0 && (
+              <span className="text-xs text-gray-400 line-through">
+                ${course.oldPrice}
               </span>
             )}
-            <span className="text-sm font-semibold text-[#FF782D]">
-              {priceLabel}
+
+            <span className="text-sm font-bold text-[#FF782D]">
+              {course.price === 0 ? "Free" : `$${course.price}`}
             </span>
-            {isFree && (
-              <span className="rounded-full bg-[#ECFDF3] px-2 py-0.5 text-[10px] font-semibold text-[#15803D]">
-                Free
-              </span>
-            )}
           </div>
 
-          <button className="text-[11px] font-semibold text-slate-900 transition-colors hover:text-[#FF782D]">
+          <button
+            type="button"
+            onClick={handleViewDetail}
+            className="text-xs font-semibold text-[#FF782D] hover:underline"
+          >
             View More
           </button>
         </div>

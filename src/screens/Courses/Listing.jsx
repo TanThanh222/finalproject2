@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import PageContainer from "../../components/layout/PageContainer.jsx";
 import courses from "../../data/courses.jsx";
 import CourseCard from "../../components/courses/CourseCard.jsx";
@@ -6,6 +6,75 @@ import { SearchIcon, GridIcon, ListIcon } from "../../assets/icons/ui.jsx";
 
 export default function CourseListingScreen() {
   const [viewMode, setViewMode] = useState("list");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedInstructors, setSelectedInstructors] = useState([]);
+  const [priceFilter, setPriceFilter] = useState("All");
+  const [selectedLevels, setSelectedLevels] = useState([]);
+  const [minStars, setMinStars] = useState(null);
+
+  const categoryOptions = useMemo(
+    () => Array.from(new Set(courses.map((c) => c.category))).filter(Boolean),
+    []
+  );
+  const instructorOptions = useMemo(
+    () => Array.from(new Set(courses.map((c) => c.instructor))).filter(Boolean),
+    []
+  );
+  const levelOptions = useMemo(
+    () => Array.from(new Set(courses.map((c) => c.level))).filter(Boolean),
+    []
+  );
+
+  const toggleInArray = (arr, value) =>
+    arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+
+  const filteredCourses = useMemo(() => {
+    return courses.filter((course) => {
+      if (searchTerm.trim()) {
+        const keyword = searchTerm.toLowerCase();
+        const inTitle = course.title?.toLowerCase().includes(keyword);
+        const inInstructor = course.instructor?.toLowerCase().includes(keyword);
+        if (!inTitle && !inInstructor) return false;
+      }
+
+      if (
+        selectedCategories.length > 0 &&
+        !selectedCategories.includes(course.category)
+      ) {
+        return false;
+      }
+
+      if (
+        selectedInstructors.length > 0 &&
+        !selectedInstructors.includes(course.instructor)
+      ) {
+        return false;
+      }
+
+      if (priceFilter === "Free" && course.price > 0) return false;
+      if (priceFilter === "Paid" && course.price === 0) return false;
+
+      if (selectedLevels.length > 0 && !selectedLevels.includes(course.level)) {
+        return false;
+      }
+
+      if (minStars != null) {
+        const rounded = Math.round(course.rating || 0);
+        if (rounded < minStars) return false;
+      }
+
+      return true;
+    });
+  }, [
+    courses,
+    searchTerm,
+    selectedCategories,
+    selectedInstructors,
+    priceFilter,
+    selectedLevels,
+    minStars,
+  ]);
 
   return (
     <section className="bg-[#F4F5F7] py-14">
@@ -20,6 +89,8 @@ export default function CourseListingScreen() {
               <input
                 type="text"
                 placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-64 rounded-full border border-[#e5e7eb] bg-white pl-4 pr-9 text-xs text-slate-700 placeholder:text-slate-400 focus:border-[#FF782D] focus:outline-none"
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -61,16 +132,22 @@ export default function CourseListingScreen() {
           <div className="flex-1 space-y-4">
             {viewMode === "grid" ? (
               <div className="grid gap-5 lg:grid-cols-2">
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <CourseCard key={course.id} course={course} variant="grid" />
                 ))}
               </div>
             ) : (
               <div className="space-y-4">
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <CourseCard key={course.id} course={course} variant="list" />
                 ))}
               </div>
+            )}
+
+            {filteredCourses.length === 0 && (
+              <p className="mt-4 text-center text-xs text-slate-500">
+                Không tìm thấy khóa học nào phù hợp với bộ lọc hiện tại.
+              </p>
             )}
 
             <div className="mt-6 flex justify-center gap-2">
@@ -95,25 +172,21 @@ export default function CourseListingScreen() {
                 Course Category
               </h3>
               <ul className="space-y-1 text-xs text-slate-600">
-                {[
-                  "Commercial",
-                  "Office",
-                  "Shop",
-                  "Educate",
-                  "Academy",
-                  "Single family home",
-                  "Studio",
-                  "University",
-                ].map((item) => (
+                {categoryOptions.map((item) => (
                   <li key={item} className="flex items-center justify-between">
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                        checked={selectedCategories.includes(item)}
+                        onChange={() =>
+                          setSelectedCategories((prev) =>
+                            toggleInArray(prev, item)
+                          )
+                        }
                       />
                       <span>{item}</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">15</span>
                   </li>
                 ))}
               </ul>
@@ -124,16 +197,21 @@ export default function CourseListingScreen() {
                 Instructors
               </h3>
               <ul className="space-y-1 text-xs text-slate-600">
-                {["Kenny White", "John Doe"].map((item) => (
+                {instructorOptions.map((item) => (
                   <li key={item} className="flex items-center justify-between">
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                        checked={selectedInstructors.includes(item)}
+                        onChange={() =>
+                          setSelectedInstructors((prev) =>
+                            toggleInArray(prev, item)
+                          )
+                        }
                       />
                       <span>{item}</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">15</span>
                   </li>
                 ))}
               </ul>
@@ -151,10 +229,11 @@ export default function CourseListingScreen() {
                         type="radio"
                         name="price"
                         className="h-3 w-3 border-slate-300 text-[#FF782D]"
+                        checked={priceFilter === item}
+                        onChange={() => setPriceFilter(item)}
                       />
                       <span>{item}</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">15</span>
                   </li>
                 ))}
               </ul>
@@ -166,7 +245,13 @@ export default function CourseListingScreen() {
               </h3>
               <ul className="space-y-1 text-xs text-slate-600">
                 {[5, 4, 3, 2, 1].map((star) => (
-                  <li key={star} className="flex items-center justify-between">
+                  <li
+                    key={star}
+                    className="flex cursor-pointer items-center justify-between"
+                    onClick={() =>
+                      setMinStars((prev) => (prev === star ? null : star))
+                    }
+                  >
                     <label className="flex items-center gap-1">
                       {Array.from({ length: 5 }).map((_, idx) => (
                         <span
@@ -179,7 +264,13 @@ export default function CourseListingScreen() {
                         </span>
                       ))}
                     </label>
-                    <span className="text-[11px] text-slate-400">(1,025)</span>
+                    <span
+                      className={`text-[11px] ${
+                        minStars === star ? "text-[#FF782D]" : "text-slate-400"
+                      }`}
+                    >
+                      {star}★ & up
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -190,23 +281,21 @@ export default function CourseListingScreen() {
                 Level
               </h3>
               <ul className="space-y-1 text-xs text-slate-600">
-                {["All levels", "Beginner", "Intermediate", "Expert"].map(
-                  (item) => (
-                    <li
-                      key={item}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
-                        />
-                        <span>{item}</span>
-                      </label>
-                      <span className="text-[11px] text-slate-400">15</span>
-                    </li>
-                  )
-                )}
+                {levelOptions.map((item) => (
+                  <li key={item} className="flex items-center justify-between">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
+                        checked={selectedLevels.includes(item)}
+                        onChange={() =>
+                          setSelectedLevels((prev) => toggleInArray(prev, item))
+                        }
+                      />
+                      <span>{item}</span>
+                    </label>
+                  </li>
+                ))}
               </ul>
             </div>
           </aside>
