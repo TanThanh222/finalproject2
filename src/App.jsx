@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
-
 import HomeScreen from "./screens/Home/index.jsx";
 import CourseListingScreen from "./screens/Courses/Listing.jsx";
 import Single from "./screens/Courses/Single.jsx";

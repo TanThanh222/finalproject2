@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import PageContainer from "../../components/layout/PageContainer.jsx";
 import HeroBG from "../../assets/home/hero-student.png";
 import PrimaryButton from "../../components/common/PrimaryButton.jsx";
@@ -13,8 +14,9 @@ import {
   ScienceIcon,
   NetworkIcon,
 } from "../../assets/icons/category.jsx";
-import courses from "../../data/courses.jsx";
+
 import CourseList from "../../components/courses/CourseList.jsx";
+import { CourseContext } from "../../context/CoursesContext.jsx";
 
 import AddonsBanner from "../../assets/home/addons.png";
 import SkillIllustration from "../../assets/home/skill.png";
@@ -69,35 +71,14 @@ const articles = [
 
 function CategoryCard({ title, courses, Icon }) {
   return (
-    <div
-      className="
-        group cursor-pointer
-        flex flex-col items-center justify-center
-        rounded-2xl border border-[#e5e7eb] bg-white px-6 py-6 text-center
-        transition-all duration-300 ease-out
-        hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(255,120,45,0.20)]
-        hover:border-[#FF782D]
-      "
-    >
+    <div className="group cursor-pointer flex flex-col items-center justify-center rounded-2xl border border-[#e5e7eb] bg-white px-6 py-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(255,120,45,0.20)] hover:border-[#FF782D]">
       <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#FFF1E8] text-[#FF782D]">
         {Icon && <Icon />}
       </div>
-
-      <h3
-        className="
-          mb-1 text-sm font-semibold text-slate-900
-          transition-colors duration-300 group-hover:text-[#FF782D]
-        "
-      >
+      <h3 className="mb-1 text-sm font-semibold text-slate-900 transition-colors duration-300 group-hover:text-[#FF782D]">
         {title}
       </h3>
-
-      <p
-        className="
-          text-xs text-slate-500
-          transition-colors duration-300 group-hover:text-[#FF782D]
-        "
-      >
+      <p className="text-xs text-slate-500 transition-colors duration-300 group-hover:text-[#FF782D]">
         {courses} Courses
       </p>
     </div>
@@ -111,7 +92,6 @@ function ArticleCard({ article }) {
     <article className="flex flex-col overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.04)]">
       <div className="relative">
         <img src={thumbnail} alt={title} className="h-52 w-full object-cover" />
-
         <span className="absolute left-4 top-4 rounded-full bg-slate-900/85 px-3 py-1 text-xs font-medium text-white">
           {category}
         </span>
@@ -119,11 +99,9 @@ function ArticleCard({ article }) {
 
       <div className="px-5 py-4">
         <p className="mb-1 text-[11px] text-slate-500">{date}</p>
-
         <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-900">
           {title}
         </h3>
-
         <p className="text-xs text-slate-500">{excerpt}</p>
       </div>
 
@@ -137,6 +115,8 @@ function ArticleCard({ article }) {
 }
 
 export default function HomeScreen() {
+  const { courses, loading } = useContext(CourseContext);
+
   return (
     <>
       <section
@@ -152,12 +132,10 @@ export default function HomeScreen() {
             <h1 className="text-4xl lg:text-[48px] font-bold leading-tight text-slate-900">
               Build Skills With <br /> Online Course
             </h1>
-
             <p className="text-slate-600 text-base">
               We denounce with righteous indignation and dislike men who are so
               beguiled and demoralized that cannot trouble.
             </p>
-
             <PrimaryButton size="lg">Posts Comment</PrimaryButton>
           </div>
         </PageContainer>
@@ -174,7 +152,6 @@ export default function HomeScreen() {
                 Explore our Popular Categories
               </p>
             </div>
-
             <PrimaryButton variant="outline" size="sm">
               All Categories
             </PrimaryButton>
@@ -182,16 +159,12 @@ export default function HomeScreen() {
 
           <div className="grid gap-4 md:grid-cols-5 md:gap-5">
             {categories.map((cat) => (
-              <CategoryCard
-                key={cat.id}
-                title={cat.title}
-                courses={cat.courses}
-                Icon={cat.Icon}
-              />
+              <CategoryCard key={cat.id} {...cat} />
             ))}
           </div>
         </PageContainer>
       </section>
+
       <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
@@ -203,13 +176,16 @@ export default function HomeScreen() {
                 Explore our Popular Courses
               </p>
             </div>
-
             <PrimaryButton variant="outline" size="sm">
               All Courses
             </PrimaryButton>
           </div>
 
-          <CourseList courses={courses} limit={6} />
+          {loading ? (
+            <p className="text-sm text-slate-500">Loading courses...</p>
+          ) : (
+            <CourseList courses={courses} limit={6} />
+          )}
         </PageContainer>
       </section>
 
@@ -319,13 +295,11 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
+
       <section className="py-16">
         <PageContainer>
           <div
-            className="
-              relative w-full overflow-hidden 
-              rounded-[30px] px-10 py-12
-            "
+            className="relative w-full overflow-hidden rounded-[30px] px-10 py-12"
             style={{
               backgroundImage: `url(${LmsBanner})`,
               backgroundSize: "cover",
@@ -351,12 +325,7 @@ export default function HomeScreen() {
               </div>
             </div>
 
-            <div
-              className="
-                mt-6 flex flex-wrap gap-4 
-                md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2
-              "
-            >
+            <div className="mt-6 flex flex-wrap gap-4 md:absolute md:right-10 md:top-1/2 md:-translate-y-1/2">
               <PrimaryButton
                 variant="outline"
                 size="md"
@@ -384,7 +353,6 @@ export default function HomeScreen() {
                 Explore our Free Articles
               </p>
             </div>
-
             <PrimaryButton variant="outline" size="sm">
               All Articles
             </PrimaryButton>

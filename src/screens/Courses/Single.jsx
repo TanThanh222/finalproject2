@@ -3,7 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, Tabs, Rate, Tag, Form, Input } from "antd";
 import PageContainer from "../../components/layout/PageContainer";
 import PrimaryButton from "../../components/common/PrimaryButton";
-import courses from "../../data/courses.jsx";
+import { useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { CourseContext } from "../../context/CoursesContext";
 
 const { TextArea } = Input;
 
@@ -11,7 +13,21 @@ export default function Single() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const course = courses.find((c) => String(c.id) === String(id));
+  const { courses } = useContext(CourseContext);
+  const [course, setCourse] = useState(null);
+
+  useEffect(() => {
+    const found = courses.find((c) => c._id === id);
+    if (found) setCourse(found);
+  }, [courses, id]);
+
+  if (!course) {
+    return (
+      <PageContainer className="py-10">
+        <p className="text-gray-600">Loading course...</p>
+      </PageContainer>
+    );
+  }
 
   if (!course) {
     return (

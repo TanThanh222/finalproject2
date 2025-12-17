@@ -1,16 +1,27 @@
-import React from "react";
-import { Form, Input } from "antd";
+import { useContext } from "react";
+import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
+
 import PageContainer from "../../components/layout/PageContainer";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import AuthCard from "../../components/common/AuthCard";
+import { AuthContext } from "../../context/AuthContext";
 
-export default function LoginPage({ onLoginSuccess }) {
+export default function LoginPage() {
   const navigate = useNavigate();
+  const { login, loading } = useContext(AuthContext);
 
-  const onFinish = () => {
-    onLoginSuccess?.();
-    navigate("/");
+  const onFinish = async (values) => {
+    const { email, password } = values;
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      message.success("Đăng nhập thành công 🎉");
+      navigate("/");
+    } else {
+      message.error(result.message);
+    }
   };
 
   return (
@@ -51,6 +62,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
               <PrimaryButton
                 htmlType="submit"
+                loading={loading}
                 className="w-full h-11 mt-2 text-base"
               >
                 Login

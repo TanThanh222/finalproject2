@@ -1,15 +1,27 @@
-import React from "react";
-import { Form, Input } from "antd";
+import { useContext } from "react";
+import { Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
+
 import PageContainer from "../../components/layout/PageContainer";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import AuthCard from "../../components/common/AuthCard";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { register, loading } = useContext(AuthContext);
 
-  const onFinish = () => {
-    navigate("/login");
+  const onFinish = async (values) => {
+    const { fullName, email, password } = values;
+
+    const result = await register(fullName, email, password);
+
+    if (result.success) {
+      message.success("Đăng ký thành công 🎉 Vui lòng đăng nhập!");
+      navigate("/login");
+    } else {
+      message.error(result.message);
+    }
   };
 
   return (
@@ -60,6 +72,7 @@ export default function RegisterPage() {
 
               <PrimaryButton
                 htmlType="submit"
+                loading={loading}
                 className="w-full h-11 mt-2 text-base"
               >
                 Register
