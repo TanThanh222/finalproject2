@@ -6,7 +6,9 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { CourseContext } from "../../context/CourseContext";
 import useAuth from "../../hook/useAuth";
 import useCourseRegister from "../../hook/useCourseRegister";
+
 const { TextArea } = Input;
+
 export default function Single() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -14,27 +16,37 @@ export default function Single() {
   const { user } = useAuth();
   const { registers, regLoading, addRegister, removeRegister, isRegistered } =
     useCourseRegister();
+
   const [course, setCourse] = useState(null);
+
   useEffect(() => {
-    const found = courses.find((c) => String(c?._id || c?.id) === String(id));
+    const list = Array.isArray(courses) ? courses : [];
+    const found = list.find((c) => String(c?.id || c?._id) === String(id));
     setCourse(found || null);
   }, [courses, id]);
 
-  const userId = user?.email || user?._id;
+  const userId = useMemo(() => {
+    const email = user?.email ? String(user.email).toLowerCase().trim() : "";
+    return email;
+  }, [user?.email]);
+
   const courseId = useMemo(() => {
-    return course?.id || course?._id;
+    return course?.id || course?._id || "";
   }, [course]);
 
   const registered = useMemo(() => {
     if (!userId || !courseId) return false;
     return isRegistered(userId, courseId);
   }, [userId, courseId, isRegistered]);
+
   const registerRecord = useMemo(() => {
     if (!userId || !courseId) return null;
-    return registers.find(
+    const arr = Array.isArray(registers) ? registers : [];
+    return arr.find(
       (r) =>
-        String(r.userId) === String(userId) &&
-        String(r.courseId) === String(courseId)
+        String(r?.userId || "").toLowerCase() ===
+          String(userId).toLowerCase() &&
+        String(r?.courseId || "") === String(courseId)
     );
   }, [registers, userId, courseId]);
 
@@ -53,6 +65,7 @@ export default function Single() {
       </PageContainer>
     );
   }
+
   const handleStartNow = async () => {
     if (!user) {
       message.info("Please login to enroll this course.");
@@ -66,6 +79,7 @@ export default function Single() {
       message.info("You already enrolled this course.");
       return;
     }
+
     const res = await addRegister({ userId, courseId });
     if (res?.success === false) {
       message.error(res?.message || "Enroll failed");
@@ -76,9 +90,11 @@ export default function Single() {
   };
 
   const handleCancelEnroll = async () => {
-    if (!registerRecord?._id) return;
+    const rid =
+      registerRecord?._id || registerRecord?.id || registerRecord?._rid;
+    if (!rid) return;
 
-    const res = await removeRegister(registerRecord._id);
+    const res = await removeRegister(rid);
     if (res?.success === false) {
       message.error(res?.message || "Cancel failed");
       return;
@@ -233,11 +249,7 @@ export default function Single() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="space-y-6">
             <Card className="rounded-2xl shadow-sm" bodyStyle={{ padding: 24 }}>
-              <Tabs
-                defaultActiveKey="overview"
-                items={tabItems}
-                className="course-single-tabs"
-              />
+              <Tabs defaultActiveKey="overview" items={tabItems} />
             </Card>
 
             <Card
@@ -314,6 +326,7 @@ export default function Single() {
                     {priceText}
                   </span>
                 </div>
+
                 <PrimaryButton
                   className="w-full h-11 text-base"
                   onClick={registered ? handleCancelEnroll : handleStartNow}
@@ -327,6 +340,7 @@ export default function Single() {
                     ? "Enrolling..."
                     : "Start Now"}
                 </PrimaryButton>
+
                 <PrimaryButton
                   variant="outline"
                   className="w-full h-11 text-base"

@@ -12,6 +12,7 @@ export default function Listing() {
   const { courses, courseLoading } = useContext(CourseContext);
   const { user } = useAuth();
   const { registers, regLoading } = useCourseRegister();
+
   const [viewMode, setViewMode] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -47,24 +48,37 @@ export default function Listing() {
     () => Array.from(new Set(safeCourses.map((c) => c?.level))).filter(Boolean),
     [safeCourses]
   );
-  const userId = user?.email || user?._id;
+
+  const userId = useMemo(() => {
+    const email = user?.email ? String(user.email).toLowerCase().trim() : "";
+    return email;
+  }, [user?.email]);
+
   const myCourseIdSet = useMemo(() => {
     if (!userId) return new Set();
     const ids = (Array.isArray(registers) ? registers : [])
-      .filter((r) => String(r?.userId) === String(userId))
-      .map((r) => String(r?.courseId))
+      .filter(
+        (r) =>
+          String(r?.userId || "")
+            .toLowerCase()
+            .trim() === String(userId)
+      )
+      .map((r) => String(r?.courseId || "").trim())
       .filter(Boolean);
+
     return new Set(ids);
   }, [registers, userId]);
+
   const baseCourses = useMemo(() => {
     if (tab !== "my") return safeCourses;
     if (!userId) return [];
 
     return safeCourses.filter((c) => {
-      const cId = String(c?._id || c?.id || "");
+      const cId = String(c?.id || c?._id || "").trim();
       return myCourseIdSet.has(cId);
     });
   }, [safeCourses, tab, userId, myCourseIdSet]);
+
   const filteredCourses = useMemo(() => {
     return baseCourses.filter((course) => {
       if (searchTerm.trim()) {
@@ -217,7 +231,7 @@ export default function Listing() {
                 <div className="grid gap-5 lg:grid-cols-2">
                   {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course?._id || course?.id}
+                      key={course?.id || course?._id}
                       course={course}
                       variant="grid"
                     />
@@ -227,7 +241,7 @@ export default function Listing() {
                 <div className="space-y-4">
                   {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course?._id || course?.id}
+                      key={course?.id || course?._id}
                       course={course}
                       variant="list"
                     />

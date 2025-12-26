@@ -23,6 +23,7 @@ import StudentIcon from "../../assets/home/student.png";
 import article1 from "../../assets/home/article1.png";
 import article2 from "../../assets/home/article2.png";
 import article3 from "../../assets/home/article3.png";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   { id: 1, title: "Art & Design", courses: 38, Icon: ArtIcon },
@@ -113,6 +114,7 @@ function ArticleCard({ article }) {
 }
 
 export default function HomeScreen() {
+  const navigate = useNavigate();
   const { courses, courseLoading } = useContext(CourseContext);
 
   return (
@@ -174,7 +176,11 @@ export default function HomeScreen() {
                 Explore our Popular Courses
               </p>
             </div>
-            <PrimaryButton variant="outline" size="sm">
+            <PrimaryButton
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/courses")}
+            >
               All Courses
             </PrimaryButton>
           </div>

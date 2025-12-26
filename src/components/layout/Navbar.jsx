@@ -4,6 +4,7 @@ import PageContainer from "./PageContainer";
 import Logo from "../../assets/logos/edupress.svg";
 import { SearchIcon } from "../../assets/icons/ui";
 import PrimaryButton from "../common/PrimaryButton.jsx";
+import useAuth from "../../hook/useAuth";
 
 const Header = styled.header`
   background-color: #fff;
@@ -61,9 +62,11 @@ const NavItemLink = styled(NavLink)`
   align-items: center;
   justify-content: center;
   transition: color 0.2s ease;
+
   &.active {
     color: #ff782d;
   }
+
   &.active::after {
     content: "";
     position: absolute;
@@ -85,12 +88,22 @@ const RightActions = styled.div`
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleAuthClick = () => {
+    navigate("/auth");
+  };
+
+  const handleLogout = () => {
+    logout?.();
+    navigate("/", { replace: true });
+  };
 
   return (
     <Header>
       <PageContainer>
         <NavBar>
-          <Brand>
+          <Brand style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
             <img src={Logo} alt="EduPress" />
             <span>EduPress</span>
           </Brand>
@@ -121,13 +134,19 @@ export default function Navbar() {
           </NavCenter>
 
           <RightActions>
-            <PrimaryButton
-              variant="outline"
-              size="md"
-              onClick={() => navigate("/login")}
-            >
-              Login / Register
-            </PrimaryButton>
+            {user ? (
+              <PrimaryButton variant="outline" size="md" onClick={handleLogout}>
+                Logout
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton
+                variant="outline"
+                size="md"
+                onClick={handleAuthClick}
+              >
+                Login / Register
+              </PrimaryButton>
+            )}
 
             <PrimaryButton variant="icon" aria-label="Search">
               <SearchIcon />

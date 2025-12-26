@@ -1,20 +1,21 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import axiosClient, { withKey } from "../config/axiosClient";
-
 export const AuthContext = createContext(null);
-
-const STORAGE_KEY = "edupress_user";
-
+const USER_KEY = "edupress_user";
+const CRED_KEY = "edupress_creds";
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [creds, setCreds] = useState({});
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setUser(JSON.parse(stored));
+      const storedUser = localStorage.getItem(USER_KEY);
+      if (storedUser) setUser(JSON.parse(storedUser));
+
+      const storedCreds = localStorage.getItem(CRED_KEY);
+      if (storedCreds) setCreds(JSON.parse(storedCreds));
     } finally {
       setInitLoading(false);
     }
@@ -22,32 +23,62 @@ export default function AuthProvider({ children }) {
 
   const persistUser = (u) => {
     setUser(u);
-    if (!u) localStorage.removeItem(STORAGE_KEY);
-    else localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+    if (!u) localStorage.removeItem(USER_KEY);
+    else localStorage.setItem(USER_KEY, JSON.stringify(u));
+  };
+
+  const persistCreds = (updater) => {
+    setCreds((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      localStorage.setItem(CRED_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
   const login = async (email, password) => {
     setError("");
+    const emailLower = String(email || "")
+      .toLowerCase()
+      .trim();
+    const passStr = String(password || "");
+
     try {
       setAuthLoading(true);
 
-      const res = await axiosClient.post(withKey("/auth/login"), {
-        email,
-        password,
-      });
-      const authUser = res?.data?.data;
+      const res = await axiosClient.get(withKey("/resources/users"));
+      const raw = res?.data?.data?.data;
+      const users = Array.isArray(raw) ? raw : [];
 
-      const usersRes = await axiosClient.get(withKey("/resources/users"));
-      const users = usersRes?.data?.data?.data || [];
-      const found = users.find((u) => u.email === authUser?.email);
+      const found = users.find(
+        (u) => String(u?.email || "").toLowerCase() === emailLower
+      );
 
-      const finalUser = {
-        ...authUser,
-        role: found?.role || "user",
-      };
+      if (!found) {
+        const msg = "Email không tồn tại";
+        setError(msg);
+        return { success: false, message: msg };
+      }
 
-      persistUser(finalUser);
-      return { success: true, data: finalUser };
+      const serverPass =
+        found?.password != null ? String(found.password) : null;
+      const localPass =
+        creds[emailLower] != null ? String(creds[emailLower]) : null;
+
+      const ok =
+        (serverPass !== null && serverPass === passStr) ||
+        (serverPass === null && localPass !== null && localPass === passStr);
+
+      if (!ok) {
+        const msg = "Sai email hoặc mật khẩu";
+        setError(msg);
+        return { success: false, message: msg };
+      }
+
+      const safeUser = { ...found };
+      delete safeUser.password;
+
+      persistUser(safeUser);
+      return { success: true, data: safeUser };
     } catch (e) {
       const msg = e?.response?.data?.message || "Login failed";
       setError(msg);
@@ -59,21 +90,36 @@ export default function AuthProvider({ children }) {
 
   const register = async (fullName, email, password, role = "user") => {
     setError("");
+    const emailLower = String(email || "")
+      .toLowerCase()
+      .trim();
+    const passStr = String(password || "");
+
     try {
       setAuthLoading(true);
 
-      const res = await axiosClient.post(withKey("/auth/register"), {
-        fullName,
-        email,
-        password,
-      });
+      const resList = await axiosClient.get(withKey("/resources/users"));
+      const raw = resList?.data?.data?.data;
+      const users = Array.isArray(raw) ? raw : [];
+      const existed = users.some(
+        (u) => String(u?.email || "").toLowerCase() === emailLower
+      );
 
-      await axiosClient.post(withKey("/resources/users"), {
+      if (existed) {
+        const msg = "Email đã tồn tại, hãy dùng email khác";
+        setError(msg);
+        return { success: false, message: msg };
+      }
+
+      const payload = {
         fullName,
-        email,
+        email: emailLower,
+        password: passStr,
         role,
         createdAt: Date.now(),
-      });
+      };
+      const res = await axiosClient.post(withKey("/resources/users"), payload);
+      persistCreds((prev) => ({ ...prev, [emailLower]: passStr }));
 
       return { success: true, data: res?.data?.data };
     } catch (e) {
@@ -86,12 +132,17 @@ export default function AuthProvider({ children }) {
   };
 
   const logout = () => persistUser(null);
+  const loading = useMemo(
+    () => authLoading || initLoading,
+    [authLoading, initLoading]
+  );
 
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuth: !!user,
+        loading,
         authLoading,
         initLoading,
         error,
