@@ -1,20 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-
-import App from "./App.jsx";
-import AuthProvider from "./context/AuthContext.jsx";
-import CourseProvider from "./context/CoursesContext.jsx";
+import App from "./App";
 import "./index.css";
+
+import AuthProvider from "./context/AuthContext";
+import CourseProvider from "./context/CourseContext";
+import CourseRegisterProvider from "./context/CourseRegisterContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <CourseProvider>
+    <AuthProvider>
+      <CourseProvider>
+        <CourseRegisterProvider>
           <App />
-        </CourseProvider>
-      </AuthProvider>
-    </BrowserRouter>
+        </CourseRegisterProvider>
+      </CourseProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

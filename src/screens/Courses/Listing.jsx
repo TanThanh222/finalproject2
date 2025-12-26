@@ -1,12 +1,17 @@
 import { useContext, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "../../components/layout/PageContainer.jsx";
 import CourseCard from "../../components/courses/CourseCard.jsx";
 import { SearchIcon, GridIcon, ListIcon } from "../../assets/icons/ui.jsx";
-import { CourseContext } from "../../context/CoursesContext";
+import { CourseContext } from "../../context/CourseContext";
+import useAuth from "../../hook/useAuth";
+import useCourseRegister from "../../hook/useCourseRegister";
 
-export default function CourseListingScreen() {
-  const { courses, loading } = useContext(CourseContext);
-
+export default function Listing() {
+  const navigate = useNavigate();
+  const { courses, courseLoading } = useContext(CourseContext);
+  const { user } = useAuth();
+  const { registers, regLoading } = useCourseRegister();
   const [viewMode, setViewMode] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -14,64 +19,97 @@ export default function CourseListingScreen() {
   const [priceFilter, setPriceFilter] = useState("All");
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [minStars, setMinStars] = useState(null);
+  const [tab, setTab] = useState("all");
 
   const toggleInArray = (arr, value) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 
-  const categoryOptions = useMemo(
-    () => Array.from(new Set(courses.map((c) => c.category))).filter(Boolean),
+  const safeCourses = useMemo(
+    () => (Array.isArray(courses) ? courses : []),
     [courses]
+  );
+
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(new Set(safeCourses.map((c) => c?.category))).filter(Boolean),
+    [safeCourses]
   );
 
   const instructorOptions = useMemo(
-    () => Array.from(new Set(courses.map((c) => c.instructor))).filter(Boolean),
-    [courses]
+    () =>
+      Array.from(new Set(safeCourses.map((c) => c?.instructor))).filter(
+        Boolean
+      ),
+    [safeCourses]
   );
 
   const levelOptions = useMemo(
-    () => Array.from(new Set(courses.map((c) => c.level))).filter(Boolean),
-    [courses]
+    () => Array.from(new Set(safeCourses.map((c) => c?.level))).filter(Boolean),
+    [safeCourses]
   );
+  const userId = user?.email || user?._id;
+  const myCourseIdSet = useMemo(() => {
+    if (!userId) return new Set();
+    const ids = (Array.isArray(registers) ? registers : [])
+      .filter((r) => String(r?.userId) === String(userId))
+      .map((r) => String(r?.courseId))
+      .filter(Boolean);
+    return new Set(ids);
+  }, [registers, userId]);
+  const baseCourses = useMemo(() => {
+    if (tab !== "my") return safeCourses;
+    if (!userId) return [];
 
+    return safeCourses.filter((c) => {
+      const cId = String(c?._id || c?.id || "");
+      return myCourseIdSet.has(cId);
+    });
+  }, [safeCourses, tab, userId, myCourseIdSet]);
   const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
+    return baseCourses.filter((course) => {
       if (searchTerm.trim()) {
         const keyword = searchTerm.toLowerCase();
-        const inTitle = course.title?.toLowerCase().includes(keyword);
-        const inInstructor = course.instructor?.toLowerCase().includes(keyword);
+        const inTitle = course?.title?.toLowerCase()?.includes(keyword);
+        const inInstructor = course?.instructor
+          ?.toLowerCase()
+          ?.includes(keyword);
         if (!inTitle && !inInstructor) return false;
       }
 
       if (
         selectedCategories.length > 0 &&
-        !selectedCategories.includes(course.category)
+        !selectedCategories.includes(course?.category)
       ) {
         return false;
       }
 
       if (
         selectedInstructors.length > 0 &&
-        !selectedInstructors.includes(course.instructor)
+        !selectedInstructors.includes(course?.instructor)
       ) {
         return false;
       }
 
-      if (priceFilter === "Free" && course.price > 0) return false;
-      if (priceFilter === "Paid" && course.price === 0) return false;
+      const price = Number(course?.price ?? 0);
+      if (priceFilter === "Free" && price > 0) return false;
+      if (priceFilter === "Paid" && price === 0) return false;
 
-      if (selectedLevels.length > 0 && !selectedLevels.includes(course.level)) {
+      if (
+        selectedLevels.length > 0 &&
+        !selectedLevels.includes(course?.level)
+      ) {
         return false;
       }
 
       if (minStars != null) {
-        const rounded = Math.round(course.rating || 0);
+        const rounded = Math.round(course?.rating || 0);
         if (rounded < minStars) return false;
       }
 
       return true;
     });
   }, [
-    courses,
+    baseCourses,
     searchTerm,
     selectedCategories,
     selectedInstructors,
@@ -80,13 +118,51 @@ export default function CourseListingScreen() {
     minStars,
   ]);
 
+  const handleChangeTab = (nextTab) => {
+    if (nextTab === "my" && !user) {
+      navigate("/auth");
+      return;
+    }
+    setTab(nextTab);
+  };
+
+  const loading = courseLoading || (tab === "my" && regLoading);
+
   return (
     <section className="bg-[#F4F5F7] py-14">
       <PageContainer>
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-[24px] font-semibold text-slate-900">
-            All Courses
-          </h1>
+          <div className="space-y-1">
+            <h1 className="text-[24px] font-semibold text-slate-900">
+              {tab === "my" ? "My Courses" : "All Courses"}
+            </h1>
+
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => handleChangeTab("all")}
+                className={`rounded-full px-3 py-1 border transition ${
+                  tab === "all"
+                    ? "border-[#FF782D] bg-[#FF782D] text-white"
+                    : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
+                }`}
+              >
+                All
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleChangeTab("my")}
+                className={`rounded-full px-3 py-1 border transition ${
+                  tab === "my"
+                    ? "border-[#FF782D] bg-[#FF782D] text-white"
+                    : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
+                }`}
+              >
+                My Courses
+              </button>
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
@@ -141,7 +217,7 @@ export default function CourseListingScreen() {
                 <div className="grid gap-5 lg:grid-cols-2">
                   {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course._id}
+                      key={course?._id || course?.id}
                       course={course}
                       variant="grid"
                     />
@@ -151,7 +227,7 @@ export default function CourseListingScreen() {
                 <div className="space-y-4">
                   {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course._id}
+                      key={course?._id || course?.id}
                       course={course}
                       variant="list"
                     />
@@ -161,7 +237,9 @@ export default function CourseListingScreen() {
 
               {filteredCourses.length === 0 && (
                 <p className="mt-4 text-center text-xs text-slate-500">
-                  Không tìm thấy khóa học nào phù hợp với bộ lọc hiện tại.
+                  {tab === "my"
+                    ? "Bạn chưa đăng ký khóa học nào."
+                    : "Không tìm thấy khóa học nào phù hợp với bộ lọc hiện tại."}
                 </p>
               )}
 
@@ -263,7 +341,6 @@ export default function CourseListingScreen() {
                 </ul>
               </div>
 
-              {/* Review */}
               <div>
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Review

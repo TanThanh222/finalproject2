@@ -14,10 +14,8 @@ import {
   ScienceIcon,
   NetworkIcon,
 } from "../../assets/icons/category.jsx";
-
 import CourseList from "../../components/courses/CourseList.jsx";
-import { CourseContext } from "../../context/CoursesContext.jsx";
-
+import { CourseContext } from "../../context/CourseContext.jsx";
 import AddonsBanner from "../../assets/home/addons.png";
 import SkillIllustration from "../../assets/home/skill.png";
 import LmsBanner from "../../assets/home/academylms.png";
@@ -115,7 +113,7 @@ function ArticleCard({ article }) {
 }
 
 export default function HomeScreen() {
-  const { courses, loading } = useContext(CourseContext);
+  const { courses, courseLoading } = useContext(CourseContext);
 
   return (
     <>
@@ -180,8 +178,7 @@ export default function HomeScreen() {
               All Courses
             </PrimaryButton>
           </div>
-
-          {loading ? (
+          {courseLoading ? (
             <p className="text-sm text-slate-500">Loading courses...</p>
           ) : (
             <CourseList courses={courses} limit={6} />

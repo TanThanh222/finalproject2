@@ -1,27 +1,44 @@
-import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Tabs, Rate, Tag, Form, Input } from "antd";
+import { Card, Tabs, Rate, Form, Input, message } from "antd";
 import PageContainer from "../../components/layout/PageContainer";
 import PrimaryButton from "../../components/common/PrimaryButton";
-import { useContext, useEffect, useState } from "react";
-import axios from "axios";
-import { CourseContext } from "../../context/CoursesContext";
-
+import { useContext, useEffect, useMemo, useState } from "react";
+import { CourseContext } from "../../context/CourseContext";
+import useAuth from "../../hook/useAuth";
+import useCourseRegister from "../../hook/useCourseRegister";
 const { TextArea } = Input;
-
 export default function Single() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const { courses } = useContext(CourseContext);
+  const { courses, courseLoading } = useContext(CourseContext);
+  const { user } = useAuth();
+  const { registers, regLoading, addRegister, removeRegister, isRegistered } =
+    useCourseRegister();
   const [course, setCourse] = useState(null);
-
   useEffect(() => {
-    const found = courses.find((c) => c._id === id);
-    if (found) setCourse(found);
+    const found = courses.find((c) => String(c?._id || c?.id) === String(id));
+    setCourse(found || null);
   }, [courses, id]);
 
-  if (!course) {
+  const userId = user?.email || user?._id;
+  const courseId = useMemo(() => {
+    return course?.id || course?._id;
+  }, [course]);
+
+  const registered = useMemo(() => {
+    if (!userId || !courseId) return false;
+    return isRegistered(userId, courseId);
+  }, [userId, courseId, isRegistered]);
+  const registerRecord = useMemo(() => {
+    if (!userId || !courseId) return null;
+    return registers.find(
+      (r) =>
+        String(r.userId) === String(userId) &&
+        String(r.courseId) === String(courseId)
+    );
+  }, [registers, userId, courseId]);
+
+  if (courseLoading) {
     return (
       <PageContainer className="py-10">
         <p className="text-gray-600">Loading course...</p>
@@ -36,9 +53,38 @@ export default function Single() {
       </PageContainer>
     );
   }
+  const handleStartNow = async () => {
+    if (!user) {
+      message.info("Please login to enroll this course.");
+      navigate("/auth");
+      return;
+    }
 
-  const handleStartNow = () => {
-    console.log("Enroll course:", course.id);
+    if (!courseId) return;
+
+    if (registered) {
+      message.info("You already enrolled this course.");
+      return;
+    }
+    const res = await addRegister({ userId, courseId });
+    if (res?.success === false) {
+      message.error(res?.message || "Enroll failed");
+      return;
+    }
+
+    message.success("Enroll successful!");
+  };
+
+  const handleCancelEnroll = async () => {
+    if (!registerRecord?._id) return;
+
+    const res = await removeRegister(registerRecord._id);
+    if (res?.success === false) {
+      message.error(res?.message || "Cancel failed");
+      return;
+    }
+
+    message.success("Canceled enrollment!");
   };
 
   const tabItems = [
@@ -128,7 +174,15 @@ export default function Single() {
 
   const handleSubmitComment = (values) => {
     console.log("Comment submit:", values);
+    message.success("Comment submitted (demo)!");
   };
+
+  const priceText =
+    course?.price === 0
+      ? "Free"
+      : course?.price != null
+      ? `$${Number(course.price).toFixed(2)}`
+      : "$49.00";
 
   return (
     <div className="bg-gray-50">
@@ -152,7 +206,7 @@ export default function Single() {
               <div className="flex flex-wrap items-center gap-4 text-sm opacity-80">
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-yellow-400">
-                    {course.rating?.toFixed(1) || "4.5"}
+                    {course.rating?.toFixed?.(1) || "4.5"}
                   </span>
                   <Rate
                     disabled
@@ -160,11 +214,11 @@ export default function Single() {
                     defaultValue={Math.round(course.rating || 4.5)}
                   />
                   <span className="text-xs">
-                    ({course.students?.toLocaleString() || "156"} students)
+                    ({course.students?.toLocaleString?.() || "156"} students)
                   </span>
                 </div>
 
-                <span>{course.duration || "2 weeks"}</span>
+                <span>{course.duration || `${course.weeks ?? 2} weeks`}</span>
                 <span>•</span>
                 <span>{course.level || "All levels"}</span>
                 <span>•</span>
@@ -253,25 +307,44 @@ export default function Single() {
                 <div>
                   {course.oldPrice && (
                     <span className="text-sm text-gray-400 line-through mr-2">
-                      ${course.oldPrice.toFixed(2)}
+                      ${Number(course.oldPrice).toFixed(2)}
                     </span>
                   )}
                   <span className="text-2xl font-bold text-orange-500 mr-2">
-                    ${course.price?.toFixed(2) || "49.00"}
+                    {priceText}
                   </span>
                 </div>
-
                 <PrimaryButton
                   className="w-full h-11 text-base"
-                  onClick={handleStartNow}
+                  onClick={registered ? handleCancelEnroll : handleStartNow}
+                  disabled={regLoading}
                 >
-                  Start Now
+                  {registered
+                    ? regLoading
+                      ? "Canceling..."
+                      : "Enrolled ✓ (Cancel)"
+                    : regLoading
+                    ? "Enrolling..."
+                    : "Start Now"}
+                </PrimaryButton>
+                <PrimaryButton
+                  variant="outline"
+                  className="w-full h-11 text-base"
+                  onClick={() => navigate("/courses")}
+                >
+                  My Courses
                 </PrimaryButton>
 
                 <p className="text-xs text-gray-500">
                   30-day money-back guarantee · Full lifetime access · Access on
                   mobile and desktop.
                 </p>
+
+                {!user && (
+                  <p className="text-xs text-gray-500">
+                    * You need to login before enrolling.
+                  </p>
+                )}
               </div>
             </Card>
           </div>
