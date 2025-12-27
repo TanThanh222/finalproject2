@@ -140,7 +140,6 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
       <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
@@ -164,7 +163,6 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
       <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">
@@ -191,7 +189,6 @@ export default function HomeScreen() {
           )}
         </PageContainer>
       </section>
-
       <section className="bg-white pb-16">
         <PageContainer className="space-y-10">
           <div className="overflow-hidden rounded-4xl shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
@@ -262,7 +259,6 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
       <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-10 text-center">
@@ -298,7 +294,6 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
       <section className="py-16">
         <PageContainer>
           <div
@@ -344,7 +339,6 @@ export default function HomeScreen() {
           </div>
         </PageContainer>
       </section>
-
       <section className="bg-white py-16">
         <PageContainer>
           <div className="mb-6 flex items-center justify-between">

@@ -227,7 +227,7 @@ export default function Single() {
                   <Rate
                     disabled
                     allowHalf
-                    defaultValue={Math.round(course.rating || 4.5)}
+                    value={Number(course.rating || 4.5)}
                   />
                   <span className="text-xs">
                     ({course.students?.toLocaleString?.() || "156"} students)

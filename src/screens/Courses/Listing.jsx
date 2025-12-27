@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageContainer from "../../components/layout/PageContainer.jsx";
 import CourseCard from "../../components/courses/CourseCard.jsx";
@@ -21,6 +21,8 @@ export default function Listing() {
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [minStars, setMinStars] = useState(null);
   const [tab, setTab] = useState("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   const toggleInArray = (arr, value) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -56,6 +58,7 @@ export default function Listing() {
 
   const myCourseIdSet = useMemo(() => {
     if (!userId) return new Set();
+
     const ids = (Array.isArray(registers) ? registers : [])
       .filter(
         (r) =>
@@ -81,12 +84,15 @@ export default function Listing() {
 
   const filteredCourses = useMemo(() => {
     return baseCourses.filter((course) => {
+      // Search
       if (searchTerm.trim()) {
-        const keyword = searchTerm.toLowerCase();
-        const inTitle = course?.title?.toLowerCase()?.includes(keyword);
-        const inInstructor = course?.instructor
-          ?.toLowerCase()
-          ?.includes(keyword);
+        const keyword = searchTerm.toLowerCase().trim();
+        const inTitle = String(course?.title || "")
+          .toLowerCase()
+          .includes(keyword);
+        const inInstructor = String(course?.instructor || "")
+          .toLowerCase()
+          .includes(keyword);
         if (!inTitle && !inInstructor) return false;
       }
 
@@ -116,8 +122,8 @@ export default function Listing() {
       }
 
       if (minStars != null) {
-        const rounded = Math.round(course?.rating || 0);
-        if (rounded < minStars) return false;
+        const rating = Number(course?.rating || 0);
+        if (rating < minStars) return false;
       }
 
       return true;
@@ -132,6 +138,32 @@ export default function Listing() {
     minStars,
   ]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [
+    tab,
+    searchTerm,
+    selectedCategories,
+    selectedInstructors,
+    priceFilter,
+    selectedLevels,
+    minStars,
+  ]);
+
+  const totalPages = useMemo(() => {
+    const n = Math.ceil(filteredCourses.length / pageSize);
+    return Math.max(n, 1);
+  }, [filteredCourses.length]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedCourses = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredCourses.slice(start, start + pageSize);
+  }, [filteredCourses, page]);
+
   const handleChangeTab = (nextTab) => {
     if (nextTab === "my" && !user) {
       navigate("/auth");
@@ -141,6 +173,34 @@ export default function Listing() {
   };
 
   const loading = courseLoading || (tab === "my" && regLoading);
+
+  const pagesToShow = useMemo(() => {
+    const maxButtons = 7;
+    if (totalPages <= maxButtons) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const half = Math.floor((maxButtons - 2) / 2);
+    let start = page - half;
+    let end = page + half;
+
+    if (start < 2) {
+      start = 2;
+      end = start + (maxButtons - 3);
+    }
+    if (end > totalPages - 1) {
+      end = totalPages - 1;
+      start = end - (maxButtons - 3);
+    }
+
+    const mid = [];
+    for (let p = start; p <= end; p++) mid.push(p);
+    const result = [1];
+    if (start > 2) result.push("...");
+    result.push(...mid);
+    if (end < totalPages - 1) result.push("...");
+    result.push(totalPages);
+    return result;
+  }, [page, totalPages]);
 
   return (
     <section className="bg-[#F4F5F7] py-14">
@@ -201,6 +261,7 @@ export default function Listing() {
                     ? "bg-[#FF782D]/10 text-[#FF782D]"
                     : "hover:bg-slate-100"
                 }`}
+                title="Grid"
               >
                 <GridIcon className="h-4 w-4" />
               </button>
@@ -215,6 +276,7 @@ export default function Listing() {
                     ? "bg-[#FF782D]/10 text-[#FF782D]"
                     : "hover:bg-slate-100"
                 }`}
+                title="List"
               >
                 <ListIcon className="h-4 w-4" />
               </button>
@@ -229,7 +291,7 @@ export default function Listing() {
             <div className="flex-1 space-y-4">
               {viewMode === "grid" ? (
                 <div className="grid gap-5 lg:grid-cols-2">
-                  {filteredCourses.map((course) => (
+                  {pagedCourses.map((course) => (
                     <CourseCard
                       key={course?.id || course?._id}
                       course={course}
@@ -239,7 +301,7 @@ export default function Listing() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredCourses.map((course) => (
+                  {pagedCourses.map((course) => (
                     <CourseCard
                       key={course?.id || course?._id}
                       course={course}
@@ -257,20 +319,57 @@ export default function Listing() {
                 </p>
               )}
 
-              <div className="mt-6 flex justify-center gap-2">
-                {[1, 2, 3].map((page) => (
+              {filteredCourses.length > 0 && totalPages > 1 && (
+                <div className="mt-6 flex justify-center gap-2">
                   <button
-                    key={page}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition ${
-                      page === 1
-                        ? "border-[#FF782D] bg-[#FF782D] text-white"
-                        : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
-                    }`}
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="flex h-8 px-3 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-medium text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D] transition"
+                    disabled={page === 1}
+                    title="Prev"
                   >
-                    {page}
+                    Prev
                   </button>
-                ))}
-              </div>
+
+                  {pagesToShow.map((p, idx) => {
+                    if (p === "...") {
+                      return (
+                        <span
+                          key={`dots-${idx}`}
+                          className="flex h-8 w-8 items-center justify-center text-xs text-slate-400"
+                        >
+                          …
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition ${
+                          p === page
+                            ? "border-[#FF782D] bg-[#FF782D] text-white"
+                            : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="flex h-8 px-3 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-medium text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D] transition"
+                    disabled={page === totalPages}
+                    title="Next"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
 
             <aside className="w-full shrink-0 space-y-6 rounded-3xl bg-white p-5 lg:w-80 lg:p-6">

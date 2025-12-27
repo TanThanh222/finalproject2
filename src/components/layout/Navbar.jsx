@@ -90,9 +90,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const handleAuthClick = () => {
-    navigate("/auth");
-  };
+  const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
     logout?.();
@@ -134,6 +132,16 @@ export default function Navbar() {
           </NavCenter>
 
           <RightActions>
+            {isAdmin && (
+              <PrimaryButton
+                variant="outline"
+                size="md"
+                onClick={() => navigate("/admin/courses")}
+              >
+                Admin
+              </PrimaryButton>
+            )}
+
             {user ? (
               <PrimaryButton variant="outline" size="md" onClick={handleLogout}>
                 Logout
@@ -142,7 +150,7 @@ export default function Navbar() {
               <PrimaryButton
                 variant="outline"
                 size="md"
-                onClick={handleAuthClick}
+                onClick={() => navigate("/auth")}
               >
                 Login / Register
               </PrimaryButton>

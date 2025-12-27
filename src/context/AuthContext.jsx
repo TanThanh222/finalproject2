@@ -74,10 +74,14 @@ export default function AuthProvider({ children }) {
         return { success: false, message: msg };
       }
 
-      const safeUser = { ...found };
+      const isAdmin = emailLower === "admin@gmail.com";
+      const safeUser = {
+        ...found,
+        role: isAdmin ? "admin" : found.role || "user",
+      };
       delete safeUser.password;
-
       persistUser(safeUser);
+
       return { success: true, data: safeUser };
     } catch (e) {
       const msg = e?.response?.data?.message || "Login failed";

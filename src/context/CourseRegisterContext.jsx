@@ -55,14 +55,19 @@ export default function CourseRegisterProvider({ children }) {
   );
 
   const addRegister = async ({ userId: uId, courseId }) => {
-    try {
-      const uid = String(uId || "")
-        .toLowerCase()
-        .trim();
-      const cid = String(courseId || "");
-      if (!uid || !cid)
-        return { success: false, message: "Missing userId/courseId" };
+    const uid = String(uId || "")
+      .toLowerCase()
+      .trim();
+    const cid = String(courseId || "").trim();
 
+    if (!uid || !cid)
+      return { success: false, message: "Missing userId/courseId" };
+
+    if (isRegistered(uid, cid)) {
+      return { success: false, message: "Already enrolled" };
+    }
+
+    try {
       const payload = {
         timeRegister: Date.now(),
         userId: uid,
