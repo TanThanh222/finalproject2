@@ -1,13 +1,10 @@
 import { createContext, useEffect, useState } from "react";
 import axiosclient, { withKey } from "../config/axiosClient.js";
-
 export const CourseContext = createContext(null);
-
 export default function CourseProvider({ children }) {
   const [courses, setCourses] = useState([]);
   const [courseLoading, setCourseLoading] = useState(false);
   const [error, setError] = useState("");
-
   const getCourses = async () => {
     setError("");
     try {

@@ -26,6 +26,16 @@ function normalizeNumber(v) {
   return Number.isFinite(n) ? n : undefined;
 }
 
+const validateOptionalUrl = (_, value) => {
+  if (!value) return Promise.resolve();
+  try {
+    new URL(value);
+    return Promise.resolve();
+  } catch {
+    return Promise.reject(new Error("Link không hợp lệ (phải là URL)"));
+  }
+};
+
 export default function AdminCourses() {
   const { courses, courseLoading, createCourse, updateCourse, deleteCourse } =
     useContext(CourseContext);
@@ -38,9 +48,11 @@ export default function AdminCourses() {
   const [form] = Form.useForm();
 
   const filtered = useMemo(() => {
+    const list = Array.isArray(courses) ? courses : [];
     const q = keyword.trim().toLowerCase();
-    if (!q) return courses;
-    return courses.filter((c) =>
+    if (!q) return list;
+
+    return list.filter((c) =>
       String(c?.title || "")
         .toLowerCase()
         .includes(q)
@@ -58,6 +70,7 @@ export default function AdminCourses() {
       weeks: 2,
       students: 0,
       lessons: 0,
+      courseLink: "",
     });
     setOpen(true);
   };
@@ -78,6 +91,7 @@ export default function AdminCourses() {
       thumbnail: course?.thumbnail,
       rating: normalizeNumber(course?.rating),
       overview: course?.overview,
+      courseLink: course?.courseLink,
     });
     setOpen(true);
   };
@@ -106,11 +120,14 @@ export default function AdminCourses() {
         thumbnail: values.thumbnail?.trim(),
         rating: normalizeNumber(values.rating) ?? 0,
         overview: values.overview?.trim(),
+        courseLink: values.courseLink?.trim(),
       };
 
+      const editId = editing?._id || editing?.id;
+
       let res;
-      if (editing?._id) {
-        res = await updateCourse(editing._id, payload);
+      if (editId) {
+        res = await updateCourse(editId, payload);
       } else {
         res = await createCourse(payload);
       }
@@ -120,7 +137,7 @@ export default function AdminCourses() {
         return;
       }
 
-      message.success(editing ? "Updated course!" : "Created course!");
+      message.success(editId ? "Updated course!" : "Created course!");
       handleClose();
     } finally {
       setSaving(false);
@@ -128,8 +145,10 @@ export default function AdminCourses() {
   };
 
   const handleDelete = async (course) => {
-    if (!course?._id) return;
-    const res = await deleteCourse(course._id);
+    const cid = course?._id || course?.id;
+    if (!cid) return;
+
+    const res = await deleteCourse(cid);
     if (!res?.success) {
       message.error(res?.message || "Delete failed");
       return;
@@ -170,7 +189,7 @@ export default function AdminCourses() {
       title: "Price",
       dataIndex: "price",
       width: 110,
-      render: (v, r) => {
+      render: (v) => {
         const price = Number(v);
         if (price === 0) return <Tag color="green">Free</Tag>;
         return <span>${Number.isFinite(price) ? price : "-"}</span>;
@@ -328,6 +347,15 @@ export default function AdminCourses() {
               className="md:col-span-2"
             >
               <TextArea rows={4} placeholder="Short description..." />
+            </Form.Item>
+
+            <Form.Item
+              label="Course Link (YouTube/Website)"
+              name="courseLink"
+              className="md:col-span-2"
+              rules={[{ validator: validateOptionalUrl }]}
+            >
+              <Input placeholder="https://www.youtube.com/watch?v=..." />
             </Form.Item>
           </div>
         </Form>

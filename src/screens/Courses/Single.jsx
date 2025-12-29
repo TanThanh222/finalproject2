@@ -8,6 +8,38 @@ import useAuth from "../../hook/useAuth";
 import useCourseRegister from "../../hook/useCourseRegister";
 
 const { TextArea } = Input;
+const FALLBACK_IMG = "/assets/placeholder.png";
+function normalizeId(v) {
+  if (v == null) return "";
+  return String(v).trim();
+}
+function getCourseId(course) {
+  return normalizeId(course?._id || course?.id);
+}
+function resolveCourseThumb(thumbnail) {
+  if (!thumbnail) return FALLBACK_IMG;
+  const t = String(thumbnail).trim();
+  if (/^https?:\/\//i.test(t)) return t;
+  return `/assets/courses/${t}`;
+}
+function toYoutubeEmbed(url) {
+  if (!url) return "";
+  try {
+    const u = new URL(String(url).trim());
+    if (u.hostname.includes("youtube.com")) {
+      const id = u.searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : "";
+    }
+    if (u.hostname.includes("youtu.be")) {
+      const id = u.pathname.replace("/", "");
+      return id ? `https://www.youtube.com/embed/${id}` : "";
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
 
 export default function Single() {
   const { id } = useParams();
@@ -19,20 +51,28 @@ export default function Single() {
 
   const [course, setCourse] = useState(null);
 
+  const safeCourses = useMemo(
+    () => (Array.isArray(courses) ? courses : []),
+    [courses]
+  );
+
+  const routeId = useMemo(() => normalizeId(id), [id]);
+
   useEffect(() => {
-    const list = Array.isArray(courses) ? courses : [];
-    const found = list.find((c) => String(c?.id || c?._id) === String(id));
+    if (!routeId) {
+      setCourse(null);
+      return;
+    }
+    const found = safeCourses.find((c) => getCourseId(c) === routeId);
     setCourse(found || null);
-  }, [courses, id]);
+  }, [safeCourses, routeId]);
 
   const userId = useMemo(() => {
     const email = user?.email ? String(user.email).toLowerCase().trim() : "";
     return email;
   }, [user?.email]);
 
-  const courseId = useMemo(() => {
-    return course?.id || course?._id || "";
-  }, [course]);
+  const courseId = useMemo(() => getCourseId(course), [course]);
 
   const registered = useMemo(() => {
     if (!userId || !courseId) return false;
@@ -44,13 +84,24 @@ export default function Single() {
     const arr = Array.isArray(registers) ? registers : [];
     return arr.find(
       (r) =>
-        String(r?.userId || "").toLowerCase() ===
-          String(userId).toLowerCase() &&
-        String(r?.courseId || "") === String(courseId)
+        String(r?.userId || "")
+          .toLowerCase()
+          .trim() === String(userId).toLowerCase().trim() &&
+        String(r?.courseId || "").trim() === String(courseId).trim()
     );
   }, [registers, userId, courseId]);
 
-  if (courseLoading) {
+  const embedUrl = useMemo(
+    () => toYoutubeEmbed(course?.courseLink),
+    [course?.courseLink]
+  );
+
+  const thumbSrc = useMemo(
+    () => resolveCourseThumb(course?.thumbnail),
+    [course?.thumbnail]
+  );
+
+  if (courseLoading || (safeCourses.length === 0 && !course)) {
     return (
       <PageContainer className="py-10">
         <p className="text-gray-600">Loading course...</p>
@@ -108,16 +159,54 @@ export default function Single() {
       key: "overview",
       label: "Overview",
       children: (
-        <div className="space-y-3 text-gray-700 text-sm leading-relaxed">
+        <div className="space-y-4 text-gray-700 text-sm leading-relaxed">
           <p>
-            {course.overview ||
+            {course?.overview ||
               "This course provides an overview of the main concepts and features. You will learn step-by-step with practical examples."}
           </p>
+
           <p>
             LearnPress is a comprehensive WordPress LMS plugin that helps you
             create and sell courses online easily, with lessons, quizzes and
             flexible curriculum.
           </p>
+
+          {course?.courseLink && (
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Course Link
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Link tài liệu / video khóa học
+                  </p>
+                </div>
+
+                <a
+                  href={course.courseLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-semibold text-[#FF782D] hover:underline"
+                >
+                  Open ↗
+                </a>
+              </div>
+
+              {embedUrl && (
+                <div className="mt-3 aspect-video w-full overflow-hidden rounded-xl bg-black">
+                  <iframe
+                    src={embedUrl}
+                    title="Course video"
+                    className="h-full w-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ),
     },
@@ -127,7 +216,7 @@ export default function Single() {
       children: (
         <div className="space-y-2 text-gray-700 text-sm">
           {(
-            course.curriculum || [
+            course?.curriculum || [
               "Introduction & setup environment",
               "Core concepts and basic components",
               "State, props and data flow",
@@ -152,10 +241,10 @@ export default function Single() {
       children: (
         <div className="space-y-2 text-gray-700 text-sm">
           <p className="font-semibold">
-            {course.instructor || "Determined-Poitras"}
+            {course?.instructor || "Determined-Poitras"}
           </p>
           <p>
-            {course.instructorBio ||
+            {course?.instructorBio ||
               "Instructor with strong experience in building LMS platforms and teaching web development to hundreds of students."}
           </p>
         </div>
@@ -194,7 +283,7 @@ export default function Single() {
   };
 
   const priceText =
-    course?.price === 0
+    Number(course?.price) === 0
       ? "Free"
       : course?.price != null
       ? `$${Number(course.price).toFixed(2)}`
@@ -208,37 +297,37 @@ export default function Single() {
             <div className="text-white space-y-3">
               <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
                 <span className="px-2 py-1 rounded-full bg-white/10">
-                  {course.category || "Photography"}
+                  {course?.category || "Photography"}
                 </span>
                 <span className="opacity-70">
-                  by {course.instructor || "Determined-Poitras"}
+                  by {course?.instructor || "Determined-Poitras"}
                 </span>
               </div>
 
               <h1 className="text-2xl md:text-3xl font-bold max-w-2xl">
-                {course.title}
+                {course?.title}
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 text-sm opacity-80">
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-yellow-400">
-                    {course.rating?.toFixed?.(1) || "4.5"}
+                    {Number(course?.rating || 4.5).toFixed(1)}
                   </span>
                   <Rate
                     disabled
                     allowHalf
-                    value={Number(course.rating || 4.5)}
+                    value={Number(course?.rating || 4.5)}
                   />
                   <span className="text-xs">
-                    ({course.students?.toLocaleString?.() || "156"} students)
+                    ({course?.students?.toLocaleString?.() || "156"} students)
                   </span>
                 </div>
 
-                <span>{course.duration || `${course.weeks ?? 2} weeks`}</span>
+                <span>{course?.duration || `${course?.weeks ?? 2} weeks`}</span>
                 <span>•</span>
-                <span>{course.level || "All levels"}</span>
+                <span>{course?.level || "All levels"}</span>
                 <span>•</span>
-                <span>{course.lessons || 20} lessons</span>
+                <span>{course?.lessons || 20} lessons</span>
               </div>
             </div>
           </div>
@@ -312,12 +401,20 @@ export default function Single() {
           <div className="lg:pt-4">
             <Card className="rounded-2xl shadow-md">
               <div className="flex flex-col gap-4">
-                <div className="rounded-xl bg-orange-50 h-40 flex items-center justify-center text-sm text-orange-500">
-                  Course illustration
+                <div className="h-40 overflow-hidden rounded-xl bg-slate-100">
+                  <img
+                    src={thumbSrc}
+                    alt={course?.title || "Course"}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.src = FALLBACK_IMG;
+                    }}
+                  />
                 </div>
 
                 <div>
-                  {course.oldPrice && (
+                  {Number(course?.oldPrice || 0) > 0 && (
                     <span className="text-sm text-gray-400 line-through mr-2">
                       ${Number(course.oldPrice).toFixed(2)}
                     </span>
