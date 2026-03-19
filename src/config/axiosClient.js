@@ -1,15 +1,23 @@
 import axios from "axios";
 
-export const API_KEY = "69401a35d814d2c97d9ff131";
-
 const axiosClient = axios.create({
-  baseURL: "https://mindx-mockup-server.vercel.app/api",
-  headers: { "Content-Type": "application/json" },
+  baseURL: "http://localhost:5000/api",
 });
 
-export const withKey = (path) =>
-  path.includes("?")
-    ? `${path}&apiKey=${API_KEY}`
-    : `${path}?apiKey=${API_KEY}`;
+axiosClient.interceptors.request.use(
+  (config) => {
+    let token = localStorage.getItem("token");
+
+    if (token && token !== "undefined" && token !== "null") {
+      token = token.replace(/^"|"$/g, "").trim();
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 export default axiosClient;

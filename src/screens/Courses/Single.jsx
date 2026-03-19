@@ -1,466 +1,868 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, Tabs, Rate, Form, Input, message } from "antd";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Button,
+  message,
+  Spin,
+  Card,
+  Empty,
+  Tag,
+  Divider,
+  Collapse,
+  Typography,
+  Row,
+  Col,
+  Space,
+} from "antd";
+import {
+  PlayCircleOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+  BookOutlined,
+  CalendarOutlined,
+  ReadOutlined,
+  LoginOutlined,
+  CheckCircleOutlined,
+  DollarOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
+import axiosClient from "../../config/axiosClient";
 import PageContainer from "../../components/layout/PageContainer";
-import PrimaryButton from "../../components/common/PrimaryButton";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { CourseContext } from "../../context/CourseContext";
 import useAuth from "../../hook/useAuth";
-import useCourseRegister from "../../hook/useCourseRegister";
 
-const { TextArea } = Input;
-const FALLBACK_IMG = "/assets/placeholder.png";
-function normalizeId(v) {
-  if (v == null) return "";
-  return String(v).trim();
-}
-function getCourseId(course) {
-  return normalizeId(course?._id || course?.id);
-}
-function resolveCourseThumb(thumbnail) {
-  if (!thumbnail) return FALLBACK_IMG;
-  const t = String(thumbnail).trim();
-  if (/^https?:\/\//i.test(t)) return t;
-  return `/assets/courses/${t}`;
-}
-function toYoutubeEmbed(url) {
-  if (!url) return "";
-  try {
-    const u = new URL(String(url).trim());
-    if (u.hostname.includes("youtube.com")) {
-      const id = u.searchParams.get("v");
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    }
-    if (u.hostname.includes("youtu.be")) {
-      const id = u.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    }
+const { Title, Paragraph, Text } = Typography;
+const { Panel } = Collapse;
 
-    return "";
-  } catch {
-    return "";
-  }
+const styles = {
+  pageBg: {
+    background: "#f8fafc",
+    minHeight: "100vh",
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+
+  heroWrap: {
+    background: "#ffffff",
+    borderRadius: 28,
+    padding: 28,
+    marginBottom: 28,
+    boxShadow: "0 12px 32px rgba(15, 23, 42, 0.06)",
+    border: "1px solid #edf2f7",
+  },
+
+  heroImageShell: {
+    background: "#f8fafc",
+    borderRadius: 24,
+    padding: 14,
+    border: "1px solid #eef2f7",
+  },
+
+  heroImage: {
+    width: "100%",
+    height: 290,
+    objectFit: "cover",
+    borderRadius: 18,
+    display: "block",
+    background: "#f8fafc",
+  },
+
+  title: {
+    marginTop: 0,
+    marginBottom: 14,
+    fontSize: "clamp(34px, 4vw, 52px)",
+    lineHeight: 1.08,
+    fontWeight: 800,
+    letterSpacing: "-1px",
+    color: "#0f172a",
+  },
+
+  overviewText: {
+    fontSize: 17,
+    lineHeight: 1.9,
+    color: "#475569",
+    marginBottom: 0,
+  },
+
+  whiteCard: {
+    borderRadius: 24,
+    boxShadow: "0 12px 34px rgba(15, 23, 42, 0.06)",
+    border: "1px solid #edf2f7",
+    background: "#ffffff",
+  },
+
+  sidebarCard: {
+    borderRadius: 24,
+    position: "sticky",
+    top: 96,
+    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.10)",
+    border: "1px solid #edf2f7",
+    background: "#ffffff",
+    overflow: "hidden",
+  },
+
+  sidebarTop: {
+    margin: -24,
+    marginBottom: 20,
+    padding: "24px 24px 20px 24px",
+    background: "#f8fafc",
+    borderBottom: "1px solid #eef2f7",
+  },
+
+  priceText: {
+    margin: 0,
+    color: "#0f172a",
+    fontWeight: 800,
+    letterSpacing: "-0.5px",
+  },
+
+  saveBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    background: "#fff7ed",
+    color: "#ea580c",
+    border: "1px solid #fed7aa",
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: 700,
+    marginTop: 10,
+  },
+
+  enrollBtn: {
+    background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+    border: "none",
+    height: 48,
+    fontWeight: 700,
+    borderRadius: 12,
+    boxShadow: "0 12px 24px rgba(79,70,229,0.22)",
+  },
+
+  cancelBtn: {
+    height: 44,
+    fontWeight: 700,
+    borderRadius: 12,
+  },
+
+  infoItem: {
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
+    color: "#334155",
+    fontSize: 15,
+  },
+
+  infoIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#eff6ff",
+    color: "#2563eb",
+    flexShrink: 0,
+  },
+
+  statLabel: {
+    fontSize: 13,
+    color: "#94a3b8",
+    marginBottom: 4,
+  },
+
+  statValue: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+
+  panelHeaderLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  lessonIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#eff6ff",
+    color: "#2563eb",
+    flexShrink: 0,
+  },
+
+  previewButton: {
+    borderRadius: 10,
+    fontWeight: 600,
+  },
+};
+
+function CustomTag({ children, bg, color, icon }) {
+  return (
+    <Tag
+      icon={icon}
+      style={{
+        background: bg,
+        color,
+        border: "none",
+        padding: "6px 10px",
+        borderRadius: 999,
+        fontWeight: 600,
+        marginInlineEnd: 0,
+      }}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+function HoverPanel({ lesson, index, isEnrolled }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Panel
+      key={lesson._id || `${lesson.title}-${index}`}
+      header={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+            paddingRight: 8,
+          }}
+        >
+          <div style={styles.panelHeaderLeft}>
+            <div style={styles.lessonIcon}>
+              <PlayCircleOutlined />
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  lineHeight: 1.35,
+                }}
+              >
+                Lesson {lesson.order || index + 1}: {lesson.title}
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#94a3b8",
+                  marginTop: 2,
+                }}
+              >
+                Structured video lesson
+              </div>
+            </div>
+          </div>
+
+          <Space wrap>
+            <Tag
+              style={{
+                borderRadius: 999,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                color: "#334155",
+                padding: "4px 10px",
+                marginInlineEnd: 0,
+              }}
+              icon={<ClockCircleOutlined />}
+            >
+              {lesson.duration || 0} mins
+            </Tag>
+
+            {lesson.isPreview && (
+              <Tag
+                style={{
+                  borderRadius: 999,
+                  background: "#ecfdf5",
+                  border: "1px solid #bbf7d0",
+                  color: "#15803d",
+                  padding: "4px 10px",
+                  marginInlineEnd: 0,
+                  fontWeight: 600,
+                }}
+              >
+                Preview
+              </Tag>
+            )}
+          </Space>
+        </div>
+      }
+      style={{
+        marginBottom: 14,
+        border: hovered ? "1px solid #bfdbfe" : "1px solid #e8eef5",
+        borderRadius: 16,
+        background: "#ffffff",
+        boxShadow: hovered
+          ? "0 12px 28px rgba(37, 99, 235, 0.08)"
+          : "0 4px 14px rgba(15, 23, 42, 0.03)",
+        transition: "all 0.2s ease",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Paragraph
+        style={{ marginBottom: 12, color: "#475569", lineHeight: 1.8 }}
+      >
+        {lesson.description || "No lesson description."}
+      </Paragraph>
+
+      {lesson.videoUrl ? (
+        lesson.isPreview || isEnrolled ? (
+          <a href={lesson.videoUrl} target="_blank" rel="noreferrer">
+            <Button
+              type="primary"
+              ghost
+              icon={<PlayCircleOutlined />}
+              style={styles.previewButton}
+            >
+              Watch lesson video
+            </Button>
+          </a>
+        ) : (
+          <Tag
+            style={{
+              background: "#fff7ed",
+              border: "1px solid #fdba74",
+              color: "#c2410c",
+              borderRadius: 999,
+              padding: "6px 10px",
+              fontWeight: 600,
+            }}
+          >
+            Enroll to unlock this lesson video
+          </Tag>
+        )
+      ) : (
+        <Text type="secondary">No video link</Text>
+      )}
+    </Panel>
+  );
 }
 
 export default function Single() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { courses, courseLoading } = useContext(CourseContext);
   const { user } = useAuth();
-  const { registers, regLoading, addRegister, removeRegister, isRegistered } =
-    useCourseRegister();
 
   const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
-  const safeCourses = useMemo(
-    () => (Array.isArray(courses) ? courses : []),
-    [courses]
-  );
-
-  const routeId = useMemo(() => normalizeId(id), [id]);
+  const fetchCourse = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axiosClient.get(`/courses/${id}`);
+      setCourse(res.data);
+    } catch (error) {
+      console.error("Fetch course error:", error);
+      message.error(error?.response?.data?.message || "Cannot load course");
+      setCourse(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (!routeId) {
-      setCourse(null);
-      return;
-    }
-    const found = safeCourses.find((c) => getCourseId(c) === routeId);
-    setCourse(found || null);
-  }, [safeCourses, routeId]);
+    fetchCourse();
+  }, [fetchCourse]);
 
-  const userId = useMemo(() => {
-    const email = user?.email ? String(user.email).toLowerCase().trim() : "";
-    return email;
-  }, [user?.email]);
+  const isEnrolled = useMemo(() => {
+    if (!user?._id || !course?.students?.length) return false;
 
-  const courseId = useMemo(() => getCourseId(course), [course]);
-
-  const registered = useMemo(() => {
-    if (!userId || !courseId) return false;
-    return isRegistered(userId, courseId);
-  }, [userId, courseId, isRegistered]);
-
-  const registerRecord = useMemo(() => {
-    if (!userId || !courseId) return null;
-    const arr = Array.isArray(registers) ? registers : [];
-    return arr.find(
-      (r) =>
-        String(r?.userId || "")
-          .toLowerCase()
-          .trim() === String(userId).toLowerCase().trim() &&
-        String(r?.courseId || "").trim() === String(courseId).trim()
+    return course.students.some(
+      (student) => student === user._id || student?._id === user._id,
     );
-  }, [registers, userId, courseId]);
+  }, [course?.students, user?._id]);
 
-  const embedUrl = useMemo(
-    () => toYoutubeEmbed(course?.courseLink),
-    [course?.courseLink]
-  );
+  const sortedLessons = useMemo(() => {
+    if (!Array.isArray(course?.lessonList)) return [];
 
-  const thumbSrc = useMemo(
-    () => resolveCourseThumb(course?.thumbnail),
-    [course?.thumbnail]
-  );
+    return [...course.lessonList].sort(
+      (a, b) => (Number(a?.order) || 0) - (Number(b?.order) || 0),
+    );
+  }, [course?.lessonList]);
 
-  if (courseLoading || (safeCourses.length === 0 && !course)) {
+  const previewLessons = useMemo(() => {
+    return sortedLessons.filter((lesson) => lesson?.isPreview);
+  }, [sortedLessons]);
+
+  const totalLessonMinutes = useMemo(() => {
+    return sortedLessons.reduce(
+      (sum, lesson) => sum + (Number(lesson?.duration) || 0),
+      0,
+    );
+  }, [sortedLessons]);
+
+  const imageUrl =
+    course?.image && course.image.startsWith("http")
+      ? course.image
+      : "https://via.placeholder.com/1200x700?text=Course+Image";
+
+  const price = Number(course?.price) || 0;
+  const oldPrice = Number(course?.oldPrice) || 0;
+
+  const priceText = price > 0 ? `$${price.toFixed(2)}` : "Free";
+  const oldPriceText = oldPrice > 0 ? `$${oldPrice.toFixed(2)}` : null;
+
+  const discountPercent =
+    oldPrice > price && oldPrice > 0
+      ? Math.round(((oldPrice - price) / oldPrice) * 100)
+      : 0;
+
+  const handleEnroll = async () => {
+    try {
+      setEnrolling(true);
+      await axiosClient.post(`/enroll/courses/${id}/enroll`);
+      message.success("Enrolled successfully");
+      await fetchCourse();
+    } catch (error) {
+      console.error("Enroll error:", error);
+      message.error(error?.response?.data?.message || "Enroll failed");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleCancelEnroll = async () => {
+    try {
+      setCanceling(true);
+      await axiosClient.delete(`/enroll/courses/${id}/enroll`);
+      message.success("Enrollment cancelled");
+      await fetchCourse();
+    } catch (error) {
+      console.error("Cancel enrollment error:", error);
+      message.error(
+        error?.response?.data?.message || "Cancel enrollment failed",
+      );
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <PageContainer className="py-10">
-        <p className="text-gray-600">Loading course...</p>
+      <PageContainer>
+        <div style={styles.pageBg}>
+          <div
+            style={{
+              minHeight: "50vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        </div>
       </PageContainer>
     );
   }
 
   if (!course) {
     return (
-      <PageContainer className="py-10">
-        <p className="text-gray-600">Course not found.</p>
+      <PageContainer>
+        <div style={styles.pageBg}>
+          <Empty description="Course not found" />
+        </div>
       </PageContainer>
     );
   }
 
-  const handleStartNow = async () => {
-    if (!user) {
-      message.info("Please login to enroll this course.");
-      navigate("/auth");
-      return;
-    }
-
-    if (!courseId) return;
-
-    if (registered) {
-      message.info("You already enrolled this course.");
-      return;
-    }
-
-    const res = await addRegister({ userId, courseId });
-    if (res?.success === false) {
-      message.error(res?.message || "Enroll failed");
-      return;
-    }
-
-    message.success("Enroll successful!");
-  };
-
-  const handleCancelEnroll = async () => {
-    const rid =
-      registerRecord?._id || registerRecord?.id || registerRecord?._rid;
-    if (!rid) return;
-
-    const res = await removeRegister(rid);
-    if (res?.success === false) {
-      message.error(res?.message || "Cancel failed");
-      return;
-    }
-
-    message.success("Canceled enrollment!");
-  };
-
-  const tabItems = [
-    {
-      key: "overview",
-      label: "Overview",
-      children: (
-        <div className="space-y-4 text-gray-700 text-sm leading-relaxed">
-          <p>
-            {course?.overview ||
-              "This course provides an overview of the main concepts and features. You will learn step-by-step with practical examples."}
-          </p>
-
-          <p>
-            LearnPress is a comprehensive WordPress LMS plugin that helps you
-            create and sell courses online easily, with lessons, quizzes and
-            flexible curriculum.
-          </p>
-
-          {course?.courseLink && (
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Course Link
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Link tài liệu / video khóa học
-                  </p>
-                </div>
-
-                <a
-                  href={course.courseLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-semibold text-[#FF782D] hover:underline"
-                >
-                  Open ↗
-                </a>
-              </div>
-
-              {embedUrl && (
-                <div className="mt-3 aspect-video w-full overflow-hidden rounded-xl bg-black">
-                  <iframe
-                    src={embedUrl}
-                    title="Course video"
-                    className="h-full w-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "curriculum",
-      label: "Curriculum",
-      children: (
-        <div className="space-y-2 text-gray-700 text-sm">
-          {(
-            course?.curriculum || [
-              "Introduction & setup environment",
-              "Core concepts and basic components",
-              "State, props and data flow",
-              "Routing and navigation",
-              "Final project: build an EduPress clone",
-            ]
-          ).map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-            >
-              <span>{item}</span>
-              <span className="text-xs text-gray-400">Lesson {index + 1}</span>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      key: "instructor",
-      label: "Instructor",
-      children: (
-        <div className="space-y-2 text-gray-700 text-sm">
-          <p className="font-semibold">
-            {course?.instructor || "Determined-Poitras"}
-          </p>
-          <p>
-            {course?.instructorBio ||
-              "Instructor with strong experience in building LMS platforms and teaching web development to hundreds of students."}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "faqs",
-      label: "FAQs",
-      children: (
-        <div className="space-y-3 text-gray-700 text-sm">
-          <div>
-            <p className="font-medium">Do I need prior experience?</p>
-            <p>Basic HTML/CSS/JS is recommended but not strictly required.</p>
-          </div>
-          <div>
-            <p className="font-medium">Will I get lifetime access?</p>
-            <p>Yes, once enrolled you have lifetime access to the course.</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "reviews",
-      label: "Reviews",
-      children: (
-        <div className="space-y-3 text-gray-700 text-sm">
-          <p>Chưa có đánh giá nào. Hãy là người đầu tiên để lại review.</p>
-        </div>
-      ),
-    },
-  ];
-
-  const handleSubmitComment = (values) => {
-    console.log("Comment submit:", values);
-    message.success("Comment submitted (demo)!");
-  };
-
-  const priceText =
-    Number(course?.price) === 0
-      ? "Free"
-      : course?.price != null
-      ? `$${Number(course.price).toFixed(2)}`
-      : "$49.00";
-
   return (
-    <div className="bg-gray-50">
-      <div className="bg-black py-6">
-        <PageContainer>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="text-white space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
-                <span className="px-2 py-1 rounded-full bg-white/10">
-                  {course?.category || "Photography"}
-                </span>
-                <span className="opacity-70">
-                  by {course?.instructor || "Determined-Poitras"}
-                </span>
+    <PageContainer>
+      <div style={styles.pageBg}>
+        <div style={styles.heroWrap}>
+          <Row gutter={[32, 32]} align="middle">
+            <Col xs={24} lg={14}>
+              <Space wrap size={[10, 10]} style={{ marginBottom: 16 }}>
+                <CustomTag bg="#e0f2fe" color="#0369a1">
+                  {course.category || "General"}
+                </CustomTag>
+
+                <CustomTag bg="#f3e8ff" color="#7c3aed">
+                  {course.level || "All Levels"}
+                </CustomTag>
+
+                <CustomTag bg="#eff6ff" color="#1d4ed8" icon={<BookOutlined />}>
+                  {course.lessons || sortedLessons.length} lessons
+                </CustomTag>
+
+                <CustomTag
+                  bg="#f8fafc"
+                  color="#334155"
+                  icon={<CalendarOutlined />}
+                >
+                  {course.weeks || 0} weeks
+                </CustomTag>
+
+                <CustomTag
+                  bg="#f8fafc"
+                  color="#334155"
+                  icon={<ClockCircleOutlined />}
+                >
+                  {totalLessonMinutes} mins
+                </CustomTag>
+              </Space>
+
+              <Title style={styles.title}>{course.title}</Title>
+
+              <div style={{ marginBottom: 18 }}>
+                <Text style={{ fontSize: 16, color: "#64748b" }}>
+                  Instructor:{" "}
+                  <Text style={{ color: "#0f172a", fontWeight: 700 }}>
+                    {course.instructor || "Updating..."}
+                  </Text>
+                </Text>
+
+                <Text style={{ fontSize: 16, color: "#94a3b8" }}>
+                  {" "}
+                  · {course.students?.length || 0} students enrolled
+                </Text>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-bold max-w-2xl">
-                {course?.title}
-              </h1>
+              <Paragraph style={styles.overviewText}>
+                {course.overview || "No course overview available."}
+              </Paragraph>
+            </Col>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm opacity-80">
-                <div className="flex items-center gap-1">
-                  <span className="font-semibold text-yellow-400">
-                    {Number(course?.rating || 4.5).toFixed(1)}
-                  </span>
-                  <Rate
-                    disabled
-                    allowHalf
-                    value={Number(course?.rating || 4.5)}
-                  />
-                  <span className="text-xs">
-                    ({course?.students?.toLocaleString?.() || "156"} students)
-                  </span>
-                </div>
-
-                <span>{course?.duration || `${course?.weeks ?? 2} weeks`}</span>
-                <span>•</span>
-                <span>{course?.level || "All levels"}</span>
-                <span>•</span>
-                <span>{course?.lessons || 20} lessons</span>
+            <Col xs={24} lg={10}>
+              <div style={styles.heroImageShell}>
+                <img
+                  src={imageUrl}
+                  alt={course.title}
+                  style={styles.heroImage}
+                />
               </div>
-            </div>
-          </div>
-        </PageContainer>
-      </div>
+            </Col>
+          </Row>
+        </div>
 
-      <PageContainer className="py-10">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <div className="space-y-6">
-            <Card className="rounded-2xl shadow-sm" bodyStyle={{ padding: 24 }}>
-              <Tabs defaultActiveKey="overview" items={tabItems} />
+        <Row gutter={[28, 28]} align="top">
+          <Col xs={24} lg={16}>
+            <Card
+              bordered={false}
+              style={{ ...styles.whiteCard, marginBottom: 24 }}
+            >
+              <Title
+                level={3}
+                style={{
+                  marginTop: 0,
+                  marginBottom: 12,
+                  color: "#0f172a",
+                  fontWeight: 800,
+                }}
+              >
+                About this course
+              </Title>
+
+              <Paragraph style={styles.overviewText}>
+                {course.overview || "No course overview available."}
+              </Paragraph>
             </Card>
 
             <Card
-              className="rounded-2xl shadow-sm"
-              title="Leave A Comment"
-              bodyStyle={{ padding: 24 }}
+              bordered={false}
+              style={{ ...styles.whiteCard, marginBottom: 24 }}
             >
-              <p className="text-xs text-gray-500 mb-4">
-                Your email address will not be published. Required fields are
-                marked *
-              </p>
-
-              <Form
-                layout="vertical"
-                onFinish={handleSubmitComment}
-                className="grid gap-4 lg:grid-cols-2"
+              <Title
+                level={3}
+                style={{
+                  marginTop: 0,
+                  marginBottom: 22,
+                  color: "#0f172a",
+                  fontWeight: 800,
+                }}
               >
-                <Form.Item
-                  label="Name*"
-                  name="name"
-                  rules={[{ required: true }]}
-                >
-                  <Input placeholder="Your name" />
-                </Form.Item>
+                Course details
+              </Title>
 
-                <Form.Item
-                  label="Email*"
-                  name="email"
-                  rules={[{ required: true, type: "email" }]}
-                >
-                  <Input placeholder="you@example.com" />
-                </Form.Item>
+              <Row gutter={[18, 22]}>
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Category</div>
+                  <div style={styles.statValue}>{course.category || "-"}</div>
+                </Col>
 
-                <Form.Item
-                  label="Comment"
-                  name="comment"
-                  className="lg:col-span-2"
-                  rules={[{ required: true }]}
-                >
-                  <TextArea rows={4} placeholder="Write your comment..." />
-                </Form.Item>
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Level</div>
+                  <div style={styles.statValue}>{course.level || "-"}</div>
+                </Col>
 
-                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:col-span-2">
-                  <label className="flex items-center gap-2 text-xs text-gray-600">
-                    <input type="checkbox" className="rounded" />
-                    <span>
-                      Save my name, email in this browser for the next time I
-                      comment
-                    </span>
-                  </label>
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Total lessons</div>
+                  <div style={styles.statValue}>
+                    {course.lessons || sortedLessons.length || 0}
+                  </div>
+                </Col>
 
-                  <PrimaryButton htmlType="submit" className="px-6">
-                    Post Comment
-                  </PrimaryButton>
-                </div>
-              </Form>
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Duration</div>
+                  <div style={styles.statValue}>
+                    {totalLessonMinutes} minutes
+                  </div>
+                </Col>
+
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Study period</div>
+                  <div style={styles.statValue}>{course.weeks || 0} weeks</div>
+                </Col>
+
+                <Col xs={12} md={8}>
+                  <div style={styles.statLabel}>Students</div>
+                  <div style={styles.statValue}>
+                    {course.students?.length || 0}
+                  </div>
+                </Col>
+              </Row>
             </Card>
-          </div>
 
-          <div className="lg:pt-4">
-            <Card className="rounded-2xl shadow-md">
-              <div className="flex flex-col gap-4">
-                <div className="h-40 overflow-hidden rounded-xl bg-slate-100">
-                  <img
-                    src={thumbSrc}
-                    alt={course?.title || "Course"}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = FALLBACK_IMG;
+            <Card
+              bordered={false}
+              style={{ ...styles.whiteCard, marginBottom: 24 }}
+            >
+              <Title
+                level={3}
+                style={{
+                  marginTop: 0,
+                  marginBottom: 18,
+                  color: "#0f172a",
+                  fontWeight: 800,
+                }}
+              >
+                Course curriculum
+              </Title>
+
+              {sortedLessons.length === 0 ? (
+                <Empty description="No lessons available yet" />
+              ) : (
+                <Collapse
+                  accordion
+                  bordered={false}
+                  style={{ background: "transparent" }}
+                >
+                  {sortedLessons.map((lesson, index) => (
+                    <HoverPanel
+                      key={lesson._id || `${lesson.title}-${index}`}
+                      lesson={lesson}
+                      index={index}
+                      isEnrolled={isEnrolled}
+                    />
+                  ))}
+                </Collapse>
+              )}
+            </Card>
+
+            {previewLessons.length > 0 && (
+              <Card bordered={false} style={styles.whiteCard}>
+                <Title
+                  level={3}
+                  style={{
+                    marginTop: 0,
+                    marginBottom: 18,
+                    color: "#0f172a",
+                    fontWeight: 800,
+                  }}
+                >
+                  Free preview
+                </Title>
+
+                {previewLessons.map((lesson, index) => (
+                  <div
+                    key={lesson._id || `preview-${index}`}
+                    style={{
+                      padding: "14px 0",
+                      borderBottom:
+                        index !== previewLessons.length - 1
+                          ? "1px solid #eef2f7"
+                          : "none",
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 16,
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            color: "#0f172a",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {lesson.title}
+                        </div>
+                        <Text style={{ color: "#64748b" }}>
+                          {lesson.description || "Preview lesson"}
+                        </Text>
+                      </div>
+
+                      {lesson.videoUrl && (
+                        <a
+                          href={lesson.videoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Button
+                            icon={<PlayCircleOutlined />}
+                            style={styles.previewButton}
+                          >
+                            Preview
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </Card>
+            )}
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <Card bordered={false} style={styles.sidebarCard}>
+              <div style={styles.sidebarTop}>
+                <Title level={2} style={styles.priceText}>
+                  {priceText}
+                </Title>
+
+                {oldPriceText && oldPrice > price && (
+                  <div style={{ marginTop: 6 }}>
+                    <Text
+                      delete
+                      style={{
+                        fontSize: 16,
+                        color: "#94a3b8",
+                      }}
+                    >
+                      {oldPriceText}
+                    </Text>
+                  </div>
+                )}
+
+                {discountPercent > 0 && (
+                  <div style={styles.saveBadge}>
+                    <FireOutlined />
+                    Save {discountPercent}%
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "grid", gap: 14, marginBottom: 24 }}>
+                <div style={styles.infoItem}>
+                  <div style={styles.infoIconBox}>
+                    <ReadOutlined />
+                  </div>
+                  <Text style={{ color: "#334155", fontSize: 15 }}>
+                    {course.lessons || sortedLessons.length || 0} lessons
+                  </Text>
                 </div>
 
-                <div>
-                  {Number(course?.oldPrice || 0) > 0 && (
-                    <span className="text-sm text-gray-400 line-through mr-2">
-                      ${Number(course.oldPrice).toFixed(2)}
-                    </span>
-                  )}
-                  <span className="text-2xl font-bold text-orange-500 mr-2">
-                    {priceText}
-                  </span>
+                <div style={styles.infoItem}>
+                  <div style={styles.infoIconBox}>
+                    <ClockCircleOutlined />
+                  </div>
+                  <Text style={{ color: "#334155", fontSize: 15 }}>
+                    {totalLessonMinutes} total minutes
+                  </Text>
                 </div>
 
-                <PrimaryButton
-                  className="w-full h-11 text-base"
-                  onClick={registered ? handleCancelEnroll : handleStartNow}
-                  disabled={regLoading}
-                >
-                  {registered
-                    ? regLoading
-                      ? "Canceling..."
-                      : "Enrolled ✓ (Cancel)"
-                    : regLoading
-                    ? "Enrolling..."
-                    : "Start Now"}
-                </PrimaryButton>
+                <div style={styles.infoItem}>
+                  <div style={styles.infoIconBox}>
+                    <CalendarOutlined />
+                  </div>
+                  <Text style={{ color: "#334155", fontSize: 15 }}>
+                    {course.weeks || 0} weeks
+                  </Text>
+                </div>
 
-                <PrimaryButton
-                  variant="outline"
-                  className="w-full h-11 text-base"
-                  onClick={() => navigate("/courses")}
-                >
-                  My Courses
-                </PrimaryButton>
+                <div style={styles.infoItem}>
+                  <div style={styles.infoIconBox}>
+                    <UserOutlined />
+                  </div>
+                  <Text style={{ color: "#334155", fontSize: 15 }}>
+                    {course.students?.length || 0} students
+                  </Text>
+                </div>
+              </div>
 
-                <p className="text-xs text-gray-500">
-                  30-day money-back guarantee · Full lifetime access · Access on
-                  mobile and desktop.
-                </p>
+              <Divider style={{ margin: "18px 0" }} />
+
+              <div style={{ display: "grid", gap: 12 }}>
+                {user && !isEnrolled && (
+                  <Button
+                    type="primary"
+                    size="large"
+                    block
+                    loading={enrolling}
+                    onClick={handleEnroll}
+                    icon={<DollarOutlined />}
+                    style={styles.enrollBtn}
+                  >
+                    Enroll Now
+                  </Button>
+                )}
+
+                {user && isEnrolled && (
+                  <>
+                    <Button
+                      size="large"
+                      block
+                      disabled
+                      icon={<CheckCircleOutlined />}
+                      style={{
+                        height: 46,
+                        fontWeight: 700,
+                        borderRadius: 12,
+                      }}
+                    >
+                      Already Enrolled
+                    </Button>
+
+                    <Button
+                      danger
+                      block
+                      loading={canceling}
+                      onClick={handleCancelEnroll}
+                      style={styles.cancelBtn}
+                    >
+                      Cancel Enrollment
+                    </Button>
+                  </>
+                )}
 
                 {!user && (
-                  <p className="text-xs text-gray-500">
-                    * You need to login before enrolling.
-                  </p>
+                  <Button
+                    size="large"
+                    block
+                    icon={<LoginOutlined />}
+                    onClick={() => navigate("/auth")}
+                    style={{
+                      height: 46,
+                      fontWeight: 700,
+                      borderRadius: 12,
+                    }}
+                  >
+                    Login to Enroll
+                  </Button>
                 )}
               </div>
             </Card>
-          </div>
-        </div>
-      </PageContainer>
-    </div>
+          </Col>
+        </Row>
+      </div>
+    </PageContainer>
   );
 }

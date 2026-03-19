@@ -1,526 +1,131 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useState, useMemo, useEffect } from "react";
 import PageContainer from "../../components/layout/PageContainer.jsx";
 import CourseCard from "../../components/courses/CourseCard.jsx";
-import { SearchIcon, GridIcon, ListIcon } from "../../assets/icons/ui.jsx";
 import { CourseContext } from "../../context/CourseContext";
-import useAuth from "../../hook/useAuth";
-import useCourseRegister from "../../hook/useCourseRegister";
+import { SearchIcon } from "../../assets/icons/ui.jsx";
 
 export default function Listing() {
-  const navigate = useNavigate();
-  const { courses, courseLoading } = useContext(CourseContext);
-  const { user } = useAuth();
-  const { registers, regLoading } = useCourseRegister();
+  const { courses = [], courseLoading } = useContext(CourseContext);
 
   const [viewMode, setViewMode] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedInstructors, setSelectedInstructors] = useState([]);
-  const [priceFilter, setPriceFilter] = useState("All");
-  const [selectedLevels, setSelectedLevels] = useState([]);
-  const [minStars, setMinStars] = useState(null);
-  const [tab, setTab] = useState("all");
-  const [page, setPage] = useState(1);
-  const pageSize = 6;
-
-  const toggleInArray = (arr, value) =>
-    arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
-
-  const safeCourses = useMemo(
-    () => (Array.isArray(courses) ? courses : []),
-    [courses]
-  );
-
-  const categoryOptions = useMemo(
-    () =>
-      Array.from(new Set(safeCourses.map((c) => c?.category))).filter(Boolean),
-    [safeCourses]
-  );
-
-  const instructorOptions = useMemo(
-    () =>
-      Array.from(new Set(safeCourses.map((c) => c?.instructor))).filter(
-        Boolean
-      ),
-    [safeCourses]
-  );
-
-  const levelOptions = useMemo(
-    () => Array.from(new Set(safeCourses.map((c) => c?.level))).filter(Boolean),
-    [safeCourses]
-  );
-
-  const userId = useMemo(() => {
-    const email = user?.email ? String(user.email).toLowerCase().trim() : "";
-    return email;
-  }, [user?.email]);
-
-  const myCourseIdSet = useMemo(() => {
-    if (!userId) return new Set();
-
-    const ids = (Array.isArray(registers) ? registers : [])
-      .filter(
-        (r) =>
-          String(r?.userId || "")
-            .toLowerCase()
-            .trim() === String(userId)
-      )
-      .map((r) => String(r?.courseId || "").trim())
-      .filter(Boolean);
-
-    return new Set(ids);
-  }, [registers, userId]);
-
-  const baseCourses = useMemo(() => {
-    if (tab !== "my") return safeCourses;
-    if (!userId) return [];
-
-    return safeCourses.filter((c) => {
-      const cId = String(c?.id || c?._id || "").trim();
-      return myCourseIdSet.has(cId);
-    });
-  }, [safeCourses, tab, userId, myCourseIdSet]);
 
   const filteredCourses = useMemo(() => {
-    return baseCourses.filter((course) => {
-      // Search
-      if (searchTerm.trim()) {
-        const keyword = searchTerm.toLowerCase().trim();
-        const inTitle = String(course?.title || "")
-          .toLowerCase()
-          .includes(keyword);
-        const inInstructor = String(course?.instructor || "")
-          .toLowerCase()
-          .includes(keyword);
-        if (!inTitle && !inInstructor) return false;
-      }
+    if (!courses) return [];
 
-      if (
-        selectedCategories.length > 0 &&
-        !selectedCategories.includes(course?.category)
-      ) {
-        return false;
-      }
+    return courses.filter((course) => {
+      const keyword = searchTerm.toLowerCase().trim();
 
-      if (
-        selectedInstructors.length > 0 &&
-        !selectedInstructors.includes(course?.instructor)
-      ) {
-        return false;
-      }
+      if (!keyword) return true;
 
-      const price = Number(course?.price ?? 0);
-      if (priceFilter === "Free" && price > 0) return false;
-      if (priceFilter === "Paid" && price === 0) return false;
+      const inTitle = course?.title?.toLowerCase().includes(keyword);
+      const inInstructor = course?.instructor?.toLowerCase().includes(keyword);
+      const inCategory = course?.category?.toLowerCase().includes(keyword);
+      const inLevel = course?.level?.toLowerCase().includes(keyword);
 
-      if (
-        selectedLevels.length > 0 &&
-        !selectedLevels.includes(course?.level)
-      ) {
-        return false;
-      }
-
-      if (minStars != null) {
-        const rating = Number(course?.rating || 0);
-        if (rating < minStars) return false;
-      }
-
-      return true;
+      return inTitle || inInstructor || inCategory || inLevel;
     });
-  }, [
-    baseCourses,
-    searchTerm,
-    selectedCategories,
-    selectedInstructors,
-    priceFilter,
-    selectedLevels,
-    minStars,
-  ]);
+  }, [courses, searchTerm]);
 
   useEffect(() => {
-    setPage(1);
-  }, [
-    tab,
-    searchTerm,
-    selectedCategories,
-    selectedInstructors,
-    priceFilter,
-    selectedLevels,
-    minStars,
-  ]);
-
-  const totalPages = useMemo(() => {
-    const n = Math.ceil(filteredCourses.length / pageSize);
-    return Math.max(n, 1);
-  }, [filteredCourses.length]);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  const pagedCourses = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredCourses.slice(start, start + pageSize);
-  }, [filteredCourses, page]);
-
-  const handleChangeTab = (nextTab) => {
-    if (nextTab === "my" && !user) {
-      navigate("/auth");
-      return;
-    }
-    setTab(nextTab);
-  };
-
-  const loading = courseLoading || (tab === "my" && regLoading);
-
-  const pagesToShow = useMemo(() => {
-    const maxButtons = 7;
-    if (totalPages <= maxButtons) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const half = Math.floor((maxButtons - 2) / 2);
-    let start = page - half;
-    let end = page + half;
-
-    if (start < 2) {
-      start = 2;
-      end = start + (maxButtons - 3);
-    }
-    if (end > totalPages - 1) {
-      end = totalPages - 1;
-      start = end - (maxButtons - 3);
-    }
-
-    const mid = [];
-    for (let p = start; p <= end; p++) mid.push(p);
-    const result = [1];
-    if (start > 2) result.push("...");
-    result.push(...mid);
-    if (end < totalPages - 1) result.push("...");
-    result.push(totalPages);
-    return result;
-  }, [page, totalPages]);
+    setViewMode("list");
+  }, []);
 
   return (
-    <section className="bg-[#F4F5F7] py-14">
+    <section className="bg-slate-50 py-8 md:py-10">
       <PageContainer>
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-[24px] font-semibold text-slate-900">
-              {tab === "my" ? "My Courses" : "All Courses"}
-            </h1>
-
-            <div className="flex items-center gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleChangeTab("all")}
-                className={`rounded-full px-3 py-1 border transition ${
-                  tab === "all"
-                    ? "border-[#FF782D] bg-[#FF782D] text-white"
-                    : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
-                }`}
-              >
-                All
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleChangeTab("my")}
-                className={`rounded-full px-3 py-1 border transition ${
-                  tab === "my"
-                    ? "border-[#FF782D] bg-[#FF782D] text-white"
-                    : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
-                }`}
-              >
-                My Courses
-              </button>
-            </div>
+        <div className="mb-7 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_12px_32px_rgba(15,23,42,0.06)] md:p-7">
+          <div className="mb-3 inline-flex items-center rounded-full bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700">
+            Explore Learning
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 w-64 rounded-full border border-[#e5e7eb] bg-white pl-4 pr-9 text-xs text-slate-700 placeholder:text-slate-400 focus:border-[#FF782D] focus:outline-none"
-              />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <SearchIcon className="h-4 w-4" />
-              </span>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="mb-2 text-4xl font-extrabold tracking-[-0.03em] text-slate-900 md:text-5xl">
+                All Courses
+              </h1>
+
+              <p className="text-base leading-8 text-slate-500">
+                Discover professional courses designed to help you learn faster,
+                build practical skills, and grow with confidence.
+              </p>
             </div>
 
-            <div className="flex items-center rounded-full border border-[#e5e7eb] bg-white px-1 py-1">
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition ${
-                  viewMode === "grid"
-                    ? "bg-[#FF782D]/10 text-[#FF782D]"
-                    : "hover:bg-slate-100"
-                }`}
-                title="Grid"
-              >
-                <GridIcon className="h-4 w-4" />
-              </button>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
+                <button
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    viewMode === "grid"
+                      ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.22)]"
+                      : "text-slate-600"
+                  }`}
+                  onClick={() => setViewMode("grid")}
+                >
+                  Grid View
+                </button>
 
-              <span className="mx-1 h-4 w-px bg-slate-200" />
+                <button
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    viewMode === "list"
+                      ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.22)]"
+                      : "text-slate-600"
+                  }`}
+                  onClick={() => setViewMode("list")}
+                >
+                  List View
+                </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition ${
-                  viewMode === "list"
-                    ? "bg-[#FF782D]/10 text-[#FF782D]"
-                    : "hover:bg-slate-100"
-                }`}
-                title="List"
-              >
-                <ListIcon className="h-4 w-4" />
-              </button>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search courses, instructor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-11 w-full rounded-full border border-slate-200 bg-white pl-4 pr-11 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-300 sm:w-72"
+                />
+
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                  <SearchIcon className="h-4 w-4" />
+                </span>
+              </div>
             </div>
           </div>
-        </header>
+        </div>
 
-        {loading ? (
-          <p className="text-sm text-slate-500">Loading...</p>
+        {courseLoading ? (
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+            Loading courses...
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500 shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+            No courses found
+          </div>
         ) : (
           <div className="flex flex-col gap-8 lg:flex-row">
-            <div className="flex-1 space-y-4">
+            <div className="flex-1">
               {viewMode === "grid" ? (
-                <div className="grid gap-5 lg:grid-cols-2">
-                  {pagedCourses.map((course) => (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course?.id || course?._id}
+                      key={course._id}
                       course={course}
                       variant="grid"
                     />
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {pagedCourses.map((course) => (
+                <div className="space-y-5">
+                  {filteredCourses.map((course) => (
                     <CourseCard
-                      key={course?.id || course?._id}
+                      key={course._id}
                       course={course}
                       variant="list"
                     />
                   ))}
                 </div>
               )}
-
-              {filteredCourses.length === 0 && (
-                <p className="mt-4 text-center text-xs text-slate-500">
-                  {tab === "my"
-                    ? "Bạn chưa đăng ký khóa học nào."
-                    : "Không tìm thấy khóa học nào phù hợp với bộ lọc hiện tại."}
-                </p>
-              )}
-
-              {filteredCourses.length > 0 && totalPages > 1 && (
-                <div className="mt-6 flex justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="flex h-8 px-3 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-medium text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D] transition"
-                    disabled={page === 1}
-                    title="Prev"
-                  >
-                    Prev
-                  </button>
-
-                  {pagesToShow.map((p, idx) => {
-                    if (p === "...") {
-                      return (
-                        <span
-                          key={`dots-${idx}`}
-                          className="flex h-8 w-8 items-center justify-center text-xs text-slate-400"
-                        >
-                          …
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPage(p)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition ${
-                          p === page
-                            ? "border-[#FF782D] bg-[#FF782D] text-white"
-                            : "border-[#e5e7eb] bg-white text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D]"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    className="flex h-8 px-3 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-medium text-slate-600 hover:border-[#FF782D] hover:text-[#FF782D] transition"
-                    disabled={page === totalPages}
-                    title="Next"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
             </div>
-
-            <aside className="w-full shrink-0 space-y-6 rounded-3xl bg-white p-5 lg:w-80 lg:p-6">
-              <div>
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Course Category
-                </h3>
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {categoryOptions.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
-                          checked={selectedCategories.includes(item)}
-                          onChange={() =>
-                            setSelectedCategories((prev) =>
-                              toggleInArray(prev, item)
-                            )
-                          }
-                        />
-                        <span>{item}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Instructors
-                </h3>
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {instructorOptions.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
-                          checked={selectedInstructors.includes(item)}
-                          onChange={() =>
-                            setSelectedInstructors((prev) =>
-                              toggleInArray(prev, item)
-                            )
-                          }
-                        />
-                        <span>{item}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Price
-                </h3>
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {["All", "Free", "Paid"].map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="price"
-                          className="h-3 w-3 border-slate-300 text-[#FF782D]"
-                          checked={priceFilter === item}
-                          onChange={() => setPriceFilter(item)}
-                        />
-                        <span>{item}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Review
-                </h3>
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {[5, 4, 3, 2, 1].map((star) => (
-                    <li
-                      key={star}
-                      className="flex cursor-pointer items-center justify-between"
-                      onClick={() =>
-                        setMinStars((prev) => (prev === star ? null : star))
-                      }
-                    >
-                      <label className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, idx) => (
-                          <span
-                            key={idx}
-                            className={
-                              idx < star ? "text-[#F7B500]" : "text-slate-300"
-                            }
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </label>
-                      <span
-                        className={`text-[11px] ${
-                          minStars === star
-                            ? "text-[#FF782D]"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {star}★ & up
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Level
-                </h3>
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {levelOptions.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 rounded border-slate-300 text-[#FF782D]"
-                          checked={selectedLevels.includes(item)}
-                          onChange={() =>
-                            setSelectedLevels((prev) =>
-                              toggleInArray(prev, item)
-                            )
-                          }
-                        />
-                        <span>{item}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </aside>
           </div>
         )}
       </PageContainer>

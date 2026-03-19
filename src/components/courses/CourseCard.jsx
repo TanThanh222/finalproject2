@@ -1,141 +1,250 @@
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaBookOpen, FaClock, FaSignal, FaUserGraduate } from "react-icons/fa";
 
-const FALLBACK_IMG = "/assets/courses/placeholder.png";
-
-function resolveCourseThumb(thumbnail) {
-  if (!thumbnail) return FALLBACK_IMG;
-  if (/^https?:\/\//i.test(thumbnail)) return thumbnail;
-  return `/assets/courses/${thumbnail}`;
+function formatPrice(value) {
+  const number = Number(value) || 0;
+  return `$${number.toFixed(2)}`;
 }
 
 export default function CourseCard({ course, variant = "grid" }) {
   const navigate = useNavigate();
-  const isGrid = variant === "grid";
 
-  const thumbSrc = useMemo(
-    () => resolveCourseThumb(course?.thumbnail),
-    [course?.thumbnail]
-  );
+  const imageUrl = course?.image
+    ? course.image.startsWith("http")
+      ? course.image
+      : `http://localhost:5000/${course.image.replace(/^\/+/, "")}`
+    : "/images/course-placeholder.png";
 
-  const handleViewDetail = () => {
-    const id = course?._id || course?.id;
-    if (!id) {
-      console.warn("Course id not found", course);
-      return;
-    }
-    navigate(`/courses/${id}`);
-  };
+  const studentsCount = course?.students?.length || 0;
+  const totalMinutes =
+    course?.lessonList?.reduce(
+      (sum, lesson) => sum + (Number(lesson?.duration) || 0),
+      0,
+    ) || 0;
 
-  const CourseImage = (
-    <img
-      src={thumbSrc}
-      alt={course?.title || "Course"}
-      className="h-full w-full object-cover"
-      loading="lazy"
-      onError={(e) => {
-        e.currentTarget.src = FALLBACK_IMG;
-      }}
-    />
-  );
+  const price = Number(course?.price) || 0;
+  const oldPrice = Number(course?.oldPrice) || 0;
+  const hasDiscount = oldPrice > price && oldPrice > 0;
+  const discountPercent = hasDiscount
+    ? Math.round(((oldPrice - price) / oldPrice) * 100)
+    : 0;
 
-  const Price = (
-    <span className="text-sm font-bold text-[#FF782D]">
-      {course?.price === 0 ? "Free" : course?.price ? `$${course.price}` : "-"}
-    </span>
-  );
-
-  if (isGrid) {
+  /* LIST VIEW */
+  if (variant === "list") {
     return (
-      <article className="overflow-hidden rounded-3xl bg-white border border-[#e5e7eb] shadow-[0_18px_45px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(15,23,42,0.08)]">
-        <div className="relative h-[180px] w-full overflow-hidden rounded-t-3xl">
-          {CourseImage}
-          <span className="absolute left-3 top-3 rounded-full bg-slate-900/85 px-3 py-1 text-[11px] text-white">
-            {course?.category || "Category"}
-          </span>
+      <div
+        onClick={() => navigate(`/courses/${course._id}`)}
+        className="group flex cursor-pointer flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.10)] md:flex-row md:p-5"
+      >
+        <div className="shrink-0 rounded-[20px] border border-slate-200 bg-slate-50 p-3 md:w-[280px]">
+          <img
+            src={imageUrl}
+            alt={course.title}
+            className="h-44 w-full rounded-2xl object-cover"
+            onError={(e) => (e.target.src = "/images/course-placeholder.png")}
+          />
         </div>
 
-        <div className="space-y-2 px-5 py-4">
-          <p className="text-[11px] text-slate-500">
-            by {course?.instructor || "Unknown"}
-          </p>
+        <div className="flex flex-1 flex-col justify-between">
+          <div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              {course?.category && (
+                <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                  {course.category}
+                </span>
+              )}
 
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-900">
-            {course?.title || "Untitled course"}
-          </h3>
+              {course?.level && (
+                <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                  {course.level}
+                </span>
+              )}
 
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span>⏱ {course?.weeks ?? "-"} Weeks</span>
-            <span>👥 {course?.students ?? "-"} Students</span>
-          </div>
+              {hasDiscount && (
+                <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+                  Save {discountPercent}%
+                </span>
+              )}
+            </div>
 
-          <div className="mt-2 flex items-center gap-2">
-            {(course?.oldPrice ?? 0) > 0 && (
-              <span className="text-xs text-gray-400 line-through">
-                ${course.oldPrice}
+            <h3 className="mb-2 text-2xl font-extrabold tracking-[-0.02em] text-slate-900 transition group-hover:text-blue-700">
+              {course.title}
+            </h3>
+
+            <p className="mb-3 text-sm text-slate-500">
+              Instructor:{" "}
+              <span className="font-semibold text-slate-700">
+                {course.instructor || "Updating..."}
               </span>
-            )}
-            {Price}
+            </p>
+
+            <p className="line-clamp-2 text-sm leading-7 text-slate-500">
+              {course.overview || "No overview available for this course yet."}
+            </p>
           </div>
 
-          <div className="flex justify-end pt-2">
-            <button
-              type="button"
-              onClick={handleViewDetail}
-              className="text-xs font-semibold text-[#FF782D] hover:underline"
-            >
-              View More
-            </button>
+          <div className="mt-5">
+            <div className="mb-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+                  <FaBookOpen />
+                </span>
+                <span>{course.lessons || 0} lessons</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+                  <FaClock />
+                </span>
+                <span>{course.weeks || 0} weeks</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+                  <FaSignal />
+                </span>
+                <span>{course.level || "All Levels"}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+                  <FaUserGraduate />
+                </span>
+                <span>{studentsCount} students</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+                  <FaClock />
+                </span>
+                <span>{totalMinutes} mins</span>
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                {hasDiscount && (
+                  <span className="mr-2 text-sm text-slate-400 line-through">
+                    {formatPrice(oldPrice)}
+                  </span>
+                )}
+
+                <span className="text-xl font-extrabold tracking-[-0.02em] text-slate-900">
+                  {price > 0 ? formatPrice(price) : "Free"}
+                </span>
+              </div>
+
+              <div className="rounded-full bg-linear-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_20px_rgba(79,70,229,0.22)]">
+                View Course
+              </div>
+            </div>
           </div>
         </div>
-      </article>
+      </div>
     );
   }
 
+  /* GRID VIEW */
   return (
-    <article className="flex gap-4 rounded-3xl bg-white border border-[#e5e7eb] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-      <div className="relative h-[110px] w-[180px] shrink-0 overflow-hidden rounded-2xl">
-        {CourseImage}
-        <span className="absolute left-2 top-2 rounded-full bg-slate-900/85 px-2.5 py-1 text-[10px] text-white">
-          {course?.category || "Category"}
-        </span>
+    <div
+      onClick={() => navigate(`/courses/${course._id}`)}
+      className="group cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition hover:-translate-y-1 hover:shadow-[0_22px_44px_rgba(15,23,42,0.12)]"
+    >
+      <div className="border-b border-slate-200 bg-slate-50 p-3">
+        <img
+          src={imageUrl}
+          alt={course.title}
+          className="h-52 w-full rounded-2xl object-cover"
+          onError={(e) => (e.target.src = "/images/course-placeholder.png")}
+        />
       </div>
-      <div className="flex flex-1 flex-col justify-between">
-        <div className="space-y-1">
-          <p className="text-[11px] text-slate-500">
-            by {course?.instructor || "Unknown"}
-          </p>
 
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">
-            {course?.title || "Untitled course"}
+      <div className="space-y-4 p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {course?.category && (
+            <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+              {course.category}
+            </span>
+          )}
+
+          {course?.level && (
+            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+              {course.level}
+            </span>
+          )}
+
+          {hasDiscount && (
+            <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+              Save {discountPercent}%
+            </span>
+          )}
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-lg font-extrabold tracking-[-0.02em] text-slate-900 transition group-hover:text-blue-700">
+            {course.title}
           </h3>
 
-          <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-500">
-            <span>⏱ {course?.weeks ?? "-"} Weeks</span>
-            <span>👥 {course?.students ?? "-"} Students</span>
-            {course?.level && <span>{course.level}</span>}
+          <p className="text-sm text-slate-500">
+            Instructor:{" "}
+            <span className="font-semibold text-slate-700">
+              {course.instructor || "Updating..."}
+            </span>
+          </p>
+        </div>
+
+        <p className="line-clamp-2 text-sm leading-7 text-slate-500">
+          {course.overview || "No overview available for this course yet."}
+        </p>
+
+        <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+              <FaBookOpen />
+            </span>
+            <span>{course.lessons || 0} lessons</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+              <FaClock />
+            </span>
+            <span>{course.weeks || 0} weeks</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+              <FaSignal />
+            </span>
+            <span>{course.level || "All Levels"}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+              <FaUserGraduate />
+            </span>
+            <span>{studentsCount} students</span>
           </div>
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {(course?.oldPrice ?? 0) > 0 && (
-              <span className="text-xs text-gray-400 line-through">
-                ${course.oldPrice}
+        <div className="flex items-end justify-between gap-4 border-t border-slate-100 pt-4">
+          <div>
+            {hasDiscount && (
+              <span className="mr-2 text-sm text-slate-400 line-through">
+                {formatPrice(oldPrice)}
               </span>
             )}
-            {Price}
+
+            <span className="text-lg font-extrabold tracking-[-0.02em] text-slate-900">
+              {price > 0 ? formatPrice(price) : "Free"}
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleViewDetail}
-            className="text-xs font-semibold text-[#FF782D] hover:underline"
-          >
-            View More
-          </button>
+          <div className="rounded-full bg-linear-to-r from-blue-600 to-violet-600 px-4 py-2 text-xs font-bold text-white shadow-[0_10px_20px_rgba(79,70,229,0.22)]">
+            View Course
+          </div>
         </div>
       </div>
-    </article>
+    </div>
   );
 }

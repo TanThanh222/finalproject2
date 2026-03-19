@@ -15,7 +15,7 @@ import {
   NetworkIcon,
 } from "../../assets/icons/category.jsx";
 import CourseList from "../../components/courses/CourseList.jsx";
-import { CourseContext } from "../../context/CourseContext.jsx";
+import { CourseContext } from "../../context/CourseContext";
 import AddonsBanner from "../../assets/home/addons.png";
 import SkillIllustration from "../../assets/home/skill.png";
 import LmsBanner from "../../assets/home/academylms.png";

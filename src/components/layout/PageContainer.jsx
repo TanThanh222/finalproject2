@@ -1,14 +1,20 @@
 import styled from "styled-components";
 
 const Wrapper = styled.div`
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 20px;
+  padding-right: 20px;
 
-  @media (min-width: 1024px) {
-    padding-left: 0;
-    padding-right: 0;
+  @media (min-width: 640px) {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  @media (min-width: 1280px) {
+    padding-left: 32px;
+    padding-right: 32px;
   }
 `;
 

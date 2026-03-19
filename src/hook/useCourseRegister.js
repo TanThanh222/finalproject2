@@ -3,9 +3,10 @@ import { CourseRegisterContext } from "../context/CourseRegisterContext";
 
 export default function useCourseRegister() {
   const ctx = useContext(CourseRegisterContext);
+
   if (!ctx) {
     throw new Error(
-      "useCourseRegister must be used within CourseRegisterProvider"
+      "useCourseRegister must be used within CourseRegisterProvider",
     );
   }
 
@@ -18,6 +19,5 @@ export default function useCourseRegister() {
     addRegister: ctx.addRegister,
     removeRegister: ctx.removeRegister,
     isRegistered: ctx.isRegistered,
-    currentUserId: ctx.currentUserId,
   };
 }

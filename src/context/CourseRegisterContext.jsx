@@ -1,16 +1,16 @@
 import {
   createContext,
+  useState,
   useEffect,
   useMemo,
-  useState,
   useCallback,
 } from "react";
-import axiosClient, { withKey } from "../config/axiosClient";
+import axiosClient from "../config/axiosClient";
 import useAuth from "../hook/useAuth";
 
 export const CourseRegisterContext = createContext(null);
 
-export default function CourseRegisterProvider({ children }) {
+export function CourseRegisterProvider({ children }) {
   const { user } = useAuth();
 
   const [registers, setRegisters] = useState([]);
@@ -21,11 +21,11 @@ export default function CourseRegisterProvider({ children }) {
     try {
       setLoading(true);
       setError("");
-      const res = await axiosClient.get(withKey("/resources/courseRegister"));
-      const raw = res?.data?.data?.data;
-      setRegisters(Array.isArray(raw) ? raw : []);
+
+      const res = await axiosClient.get("/enroll/my-courses");
+      setRegisters(res?.data || []);
     } catch (e) {
-      setError(e?.response?.data?.message || "Get courseRegister failed");
+      setError(e?.response?.data?.message || "Get enroll failed");
       setRegisters([]);
     } finally {
       setLoading(false);
@@ -33,54 +33,30 @@ export default function CourseRegisterProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    getRegisters();
-  }, [getRegisters]);
-  const userId = user?.email ? String(user.email).toLowerCase().trim() : "";
+    if (user) {
+      getRegisters();
+    } else {
+      setRegisters([]);
+    }
+  }, [getRegisters, user]);
+
   const myRegisters = useMemo(() => {
-    const email = user?.email?.toLowerCase();
-    if (!email) return [];
-    return registers.filter((r) => String(r?.userId).toLowerCase() === email);
-  }, [registers, user?.email]);
+    if (!user) return [];
+    return registers;
+  }, [registers, user]);
 
   const isRegistered = useCallback(
-    (userId, courseId) => {
-      if (!userId || !courseId) return false;
-      return registers.some(
-        (r) =>
-          String(r.userId).toLowerCase() === String(userId).toLowerCase() &&
-          String(r.courseId) === String(courseId)
-      );
+    (courseId) => {
+      return registers.some((course) => course._id === courseId);
     },
-    [registers]
+    [registers],
   );
 
-  const addRegister = async ({ userId: uId, courseId }) => {
-    const uid = String(uId || "")
-      .toLowerCase()
-      .trim();
-    const cid = String(courseId || "").trim();
-
-    if (!uid || !cid)
-      return { success: false, message: "Missing userId/courseId" };
-
-    if (isRegistered(uid, cid)) {
-      return { success: false, message: "Already enrolled" };
-    }
-
+  const addRegister = async (courseId) => {
     try {
-      const payload = {
-        timeRegister: Date.now(),
-        userId: uid,
-        courseId: cid,
-      };
-
-      const res = await axiosClient.post(
-        withKey("/resources/courseRegister"),
-        payload
-      );
-
+      const res = await axiosClient.post(`/enroll/courses/${courseId}/enroll`);
       await getRegisters();
-      return { success: true, data: res?.data?.data };
+      return { success: true, data: res.data };
     } catch (e) {
       return {
         success: false,
@@ -89,16 +65,13 @@ export default function CourseRegisterProvider({ children }) {
     }
   };
 
-  const removeRegister = async (registerId) => {
+  const removeRegister = async (courseId) => {
     try {
-      if (!registerId) return { success: false, message: "Missing registerId" };
-
       const res = await axiosClient.delete(
-        withKey(`/resources/courseRegister/${registerId}`)
+        `/enroll/courses/${courseId}/enroll`,
       );
-
       await getRegisters();
-      return { success: true, data: res?.data?.data };
+      return { success: true, data: res.data };
     } catch (e) {
       return {
         success: false,

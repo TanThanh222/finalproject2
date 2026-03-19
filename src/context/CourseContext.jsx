@@ -1,72 +1,78 @@
 import { createContext, useEffect, useState } from "react";
-import axiosclient, { withKey } from "../config/axiosClient.js";
-export const CourseContext = createContext(null);
-export default function CourseProvider({ children }) {
+import axiosClient from "../config/axiosClient";
+
+export const CourseContext = createContext();
+
+export const CourseProvider = ({ children }) => {
   const [courses, setCourses] = useState([]);
   const [courseLoading, setCourseLoading] = useState(false);
-  const [error, setError] = useState("");
-  const getCourses = async () => {
-    setError("");
+
+  const fetchCourses = async () => {
     try {
       setCourseLoading(true);
-      const res = await axiosclient.get(withKey("/resources/courses"));
-      const raw = res?.data?.data?.data;
-      setCourses(Array.isArray(raw) ? raw : []);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Get courses failed");
-      setCourses([]);
+
+      const res = await axiosClient.get("/courses");
+      setCourses(res.data);
+    } catch (err) {
+      console.error("Fetch courses error:", err.response?.data || err);
     } finally {
       setCourseLoading(false);
     }
   };
 
   useEffect(() => {
-    getCourses();
+    fetchCourses();
   }, []);
 
-  const createCourse = async (payload) => {
+  const createCourse = async (data) => {
     try {
-      const res = await axiosclient.post(
-        withKey("/resources/courses"),
-        payload
-      );
-      await getCourses();
-      return { success: true, data: res?.data?.data };
-    } catch (e) {
+      await axiosClient.post("/courses", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      await fetchCourses();
+      return { success: true };
+    } catch (err) {
+      console.error("Create course error:", err.response?.data || err);
       return {
         success: false,
-        message: e?.response?.data?.message || "Create course failed",
+        message: err.response?.data?.message || "Create failed",
       };
     }
   };
 
-  const updateCourse = async (mongoId, payload) => {
+  const updateCourse = async (id, data) => {
     try {
-      const res = await axiosclient.put(
-        withKey(`/resources/courses/${mongoId}`),
-        payload
-      );
-      await getCourses();
-      return { success: true, data: res?.data?.data };
-    } catch (e) {
+      await axiosClient.put(`/courses/${id}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      await fetchCourses();
+      return { success: true };
+    } catch (err) {
+      console.error("Update course error:", err.response?.data || err);
       return {
         success: false,
-        message: e?.response?.data?.message || "Update course failed",
+        message: err.response?.data?.message || "Update failed",
       };
     }
   };
 
-  const deleteCourse = async (mongoId) => {
+  const deleteCourse = async (id) => {
     try {
-      const res = await axiosclient.delete(
-        withKey(`/resources/courses/${mongoId}`)
-      );
-      await getCourses();
-      return { success: true, data: res?.data?.data };
-    } catch (e) {
+      await axiosClient.delete(`/courses/${id}`);
+
+      await fetchCourses();
+      return { success: true };
+    } catch (err) {
+      console.error("Delete course error:", err.response?.data || err);
       return {
         success: false,
-        message: e?.response?.data?.message || "Delete course failed",
+        message: err.response?.data?.message || "Delete failed",
       };
     }
   };
@@ -76,14 +82,13 @@ export default function CourseProvider({ children }) {
       value={{
         courses,
         courseLoading,
-        error,
-        getCourses,
         createCourse,
         updateCourse,
         deleteCourse,
+        fetchCourses,
       }}
     >
       {children}
     </CourseContext.Provider>
   );
-}
+};
